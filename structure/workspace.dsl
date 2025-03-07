@@ -32,14 +32,14 @@ workspace {
                 description "Интегрируется с системой уведомлений для информирования пользователей"
                 technology "Java Spring Boot"
 
-                -> notification_system "Отправляет уведомления" "HTTPS"
+                -> notification_system "Отправляет уведомления" "REST"
             }
 
             payment_registration_service = container "Сервис регистрации платежей" {
                 description "Интегрируется с платежной системой для обработки платежей"
                 technology "Java Spring Boot"
 
-                -> payment_system "Обрабатывает платежи" "HTTPS"
+                -> payment_system "Обрабатывает платежи" "REST"
             }
 
             database = container "База данных" {
@@ -119,7 +119,7 @@ workspace {
                 description "Интерфейс для взаимодействия пользователей с системой"
                 technology "NextJS"
 
-                -> api_service "Отправляет запросы" "HTTPS"
+                -> api_service "Отправляет запросы" "REST"
             }
         }
 
@@ -127,7 +127,7 @@ workspace {
         user_sender -> delivery_service.web_application "Создает посылки и инициирует доставку"
         user_receiver -> delivery_service.web_application "Получает информацию о доставке"
         admin -> delivery_service.web_application "Управляет процессами доставки"
-        notification_system -> user_receiver "Получает уведомление о новой доставке" "HTTPS"
+        notification_system -> user_receiver "Получает уведомление о новой доставке" "REST"
 
     }
 
