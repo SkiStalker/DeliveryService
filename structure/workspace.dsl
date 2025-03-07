@@ -27,7 +27,7 @@ workspace {
             // Контейнеры
             web_application = container "Веб-приложение" {
                 description "Интерфейс для взаимодействия пользователей с системой"
-                technology "Angular"
+                technology "NextJS"
             }
             api_service = container "API-сервис" {
                 description "Обрабатывает запросы от веб-приложения и внешних систем"
