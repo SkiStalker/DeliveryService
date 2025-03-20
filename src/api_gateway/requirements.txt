@@ -1,0 +1,7 @@
+fastapi
+asyncpg
+passlib
+python-jose
+pydantic
+uvicorn
+python-multipart
