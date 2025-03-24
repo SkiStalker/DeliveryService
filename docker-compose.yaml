@@ -1,10 +1,14 @@
 services:
   api_gateway:
-    build: ./src/api_gateway
+    build:
+      context: ./src
+      dockerfile: ./api_gateway/Dockerfile
     container_name: api_gateway
     working_dir: /usr/src/app
     depends_on:
-        db-node-1:
+        db_node_1:
+          condition: service_healthy
+        auth:
           condition: service_healthy
 
     ports:
@@ -12,10 +16,32 @@ services:
     env_file:
       - ".db_env"
       - ".api_env"
+      - ".auth_env"
     command:
       --port 8000 --host 0.0.0.0
     
-  db-node-1:
+  auth:
+    build: ./src/services/auth
+    container_name: auth
+    working_dir: /usr/src/app
+    depends_on:
+        db_node_1:
+          condition: service_healthy
+
+    ports:
+      - "50051:50051"
+    env_file:
+      - ".db_env"
+      - ".api_env"
+      - ".auth_env"
+
+    healthcheck:
+      test: "python ./health_check/health_check.py"
+      interval: 15s
+      timeout: 1s
+      retries: 5
+  
+  db_node_1:
     build: ./src/postgres
     container_name: postgres_db
     ports:
