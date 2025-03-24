@@ -5,3 +5,5 @@ python-jose
 pydantic
 uvicorn
 python-multipart
+grpcio 
+grpcio-tools
