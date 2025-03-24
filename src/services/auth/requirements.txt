@@ -1,0 +1,6 @@
+grpcio
+grpcio-tools
+asyncpg
+pydantic
+python-jose
+passlib

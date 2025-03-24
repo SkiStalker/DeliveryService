@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package auth;
+
+message LogoutRequest {
+    string access_token = 1;
+}
+
+message LogoutResponse {
+    int32 code = 1;
+    optional string message = 2;
+}
+
+message AuthRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message RefreshRequest {
+    string refresh_token = 1;
+}
+
+message RefreshResponse {
+    int32 code = 1;
+    oneof AuthResponseOneof {
+        string message = 2;
+        TokenPair tokens = 3;
+    }
+}
+
+message TokenPair {
+    string access_token = 1;
+    string refresh_token = 2;
+}
+
+message AuthResponse {
+    int32 code = 1;
+    oneof AuthResponseOneof {
+        string message = 2;
+        TokenPair tokens = 3;
+    }
+}
+
+message CheckPermissionsRequest {
+    string access_token = 1;
+    string permission = 2;
+}
+
+message CheckPermissionsResponse {
+    int32 code = 1;
+    optional string message = 2;
+}
+
+service AuthService {
+    rpc Auth (AuthRequest) returns (AuthResponse);
+    rpc CheckPermissions (CheckPermissionsRequest) returns (CheckPermissionsResponse);
+    rpc Refresh (RefreshRequest) returns (RefreshResponse);
+    rpc Logout (LogoutRequest) returns (LogoutResponse);
+}
