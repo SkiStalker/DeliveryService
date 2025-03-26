@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package auth;
+package account;
 
 message LogoutRequest {
     string access_token = 1;
@@ -22,7 +22,7 @@ message RefreshRequest {
 
 message RefreshResponse {
     int32 code = 1;
-    oneof AuthResponseOneof {
+    oneof RefreshResponseOneof {
         string message = 2;
         TokenPair tokens = 3;
     }
@@ -51,7 +51,7 @@ message CheckPermissionsResponse {
     optional string message = 2;
 }
 
-service AuthService {
+service AccountService {
     rpc Auth (AuthRequest) returns (AuthResponse);
     rpc CheckPermissions (CheckPermissionsRequest) returns (CheckPermissionsResponse);
     rpc Refresh (RefreshRequest) returns (RefreshResponse);

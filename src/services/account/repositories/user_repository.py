@@ -1,8 +1,7 @@
 import os
-from typing import Optional
 import asyncpg
 
-from models.user import User
+from models.auth_user_model import AuthUserModel
 
 
 DATABASE_URL = f"postgresql://{os.environ.get("POSTGRES_USER", "postgres")}:{os.environ.get("POSTGRES_PASSWORD", "postgres")}@{os.environ.get("POSTGRES_HOST", "localhost")}:{os.environ.get("POSTGRES_PORT", "5432")}/{os.environ.get("POSTGRES_DB", "company")}"
@@ -24,33 +23,33 @@ class UserRepository:
         async with self._db_pool.acquire() as conn:
             conn: asyncpg.Connection
             async with conn.transaction():
-                return await conn.fetchrow("SELECT * FROM account WHERE username = $1", username)
+                return AuthUserModel.from_record(await conn.fetchrow("SELECT account.id, account.username, account.password, account.refresh_token FROM account WHERE username = $1 and is_active = TRUE", username))
     
     async def get_user_by_id(self, user_id: str):
         async with self._db_pool.acquire() as conn:
             conn: asyncpg.Connection
             async with conn.transaction():
-                return await conn.fetchrow("SELECT * FROM account WHERE id = $1", user_id)
+                return AuthUserModel.from_record(await conn.fetchrow("SELECT account.id, account.username, account.password, account.refresh_token FROM account WHERE id = $1 and is_active = TRUE", user_id))
     
     async def remove_user_refresh_token(self, user_id: str):
         async with self._db_pool.acquire() as conn:
             conn: asyncpg.Connection
             async with conn.transaction():
-                affected_columns = await conn.execute("UPDATE company.public.account SET refresh_token = NULL WHERE id = $1", user_id)
+                affected_columns = await conn.execute("UPDATE company.public.account SET refresh_token = NULL WHERE id = $1 and is_active = TRUE", user_id)
                 return bool(affected_columns.split(" ")[:-1])
     
     async def update_refresh_token(self, user_id: str, refresh_token: str):
         async with self._db_pool.acquire() as conn:
             conn: asyncpg.Connection
             async with conn.transaction():
-                affected_columns = await conn.execute("UPDATE company.public.account SET refresh_token = $2 WHERE id = $1", user_id, refresh_token)
+                affected_columns = await conn.execute("UPDATE company.public.account SET refresh_token = $2 WHERE id = $1 and is_active = TRUE", user_id, refresh_token)
                 return bool(affected_columns.split(" ")[:-1])
     
     async def get_permissions(self, username: str):
         async with self._db_pool.acquire() as conn:
             conn: asyncpg.Connection
             async with conn.transaction():
-                rows = await conn.fetch('SELECT permission.name AS permission_name, "group".name AS group_name, account.username FROM permission JOIN group_permission ON permission.id = group_permission.permission_id JOIN "group" ON group_permission.group_id = "group".id JOIN account_group ON account_group.group_id = "group".id JOIN account ON account_group.account_id = account.id WHERE account.username = $1', username)
+                rows = await conn.fetch('SELECT permission.name AS permission_name FROM permission JOIN group_permission ON permission.id = group_permission.permission_id JOIN "group" ON group_permission.group_id = "group".id JOIN account_group ON account_group.group_id = "group".id JOIN account ON account_group.account_id = account.id WHERE account.username = $1 and account.is_active = TRUE', username)
             
                 return {row["permission_name"] for row in rows}
     

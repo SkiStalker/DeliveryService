@@ -1,17 +1,8 @@
 import os
 from datetime import datetime, timedelta, timezone
-from typing import Optional
-import asyncpg
 import grpc
-from concurrent import futures
-import time
-
-import grpc_build.auth_pb2
-import grpc_build.auth_pb2_grpc
-
-from pydantic import UUID4, BaseModel
-from grpc_build.auth_pb2 import AuthResponse, AuthRequest, TokenPair, RefreshRequest, RefreshResponse, CheckPermissionsRequest, CheckPermissionsResponse, LogoutRequest, LogoutResponse
-from grpc_build.auth_pb2_grpc import AuthServiceServicer, AuthService, add_AuthServiceServicer_to_server
+from grpc_build.account_service_pb2 import AuthResponse, AuthRequest, TokenPair, RefreshRequest, RefreshResponse, CheckPermissionsRequest, CheckPermissionsResponse, LogoutRequest, LogoutResponse
+from grpc_build.account_service_pb2_grpc import add_AccountServiceServicer_to_server, AccountServiceServicer
 from grpc import ServicerContext
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -44,7 +35,7 @@ def create_token(user_id: str,  permissions: set[str], refresh_token: bool = Fal
 
 
 
-class AuthService(AuthServiceServicer):
+class AccountService(AccountServiceServicer):
     def __init__(self, user_rep: UserRepository, tokens_clt: TokensClient):
         super().__init__()
         self._user_rep = user_rep
@@ -54,15 +45,15 @@ class AuthService(AuthServiceServicer):
     async def Auth(self, request: AuthRequest, context: ServicerContext) -> AuthResponse:
         user = await self._user_rep.get_user_by_username(request.username)
         if user is not None:
-            if pwd_context.verify(request.password, user["password"]):
-                permissions = await self._user_rep.get_permissions(user["username"])
+            if pwd_context.verify(request.password, user.password):
+                permissions = await self._user_rep.get_permissions(user.username)
                 
-                access_token = create_token(str(user["id"]), permissions)
-                refresh_token = create_token(str(user["id"]), permissions, True)
+                access_token = create_token(str(user.id), permissions)
+                refresh_token = create_token(str(user.id), permissions, True)
                 
                 await self._tokens_clt.update_tokens_pair(access_token, refresh_token)
                 
-                await self._user_rep.update_refresh_token(str(user["id"]), refresh_token)
+                await self._user_rep.update_refresh_token(str(user.id), refresh_token)
                 
                 return AuthResponse(code=200, tokens=TokenPair(access_token=access_token, 
                                                             refresh_token=refresh_token))
@@ -83,7 +74,7 @@ class AuthService(AuthServiceServicer):
             
             user = await self._user_rep.get_user_by_id(user_id)
             
-            if user is None or user["refresh_token"] is None or user["refresh_token"] != old_refresh_token:
+            if user is None or user.refresh_token is None or user.refresh_token != old_refresh_token:
                 return RefreshResponse(code=401, message="Incorrect refresh token")
             else:
                 
@@ -135,7 +126,7 @@ class AuthService(AuthServiceServicer):
             if not user:
                 return LogoutResponse(code=404, message="User not found")
             
-            refresh_token = user["refresh_token"]
+            refresh_token = user.refresh_token
             
             await self._tokens_clt.block_old_tokens_pair(refresh_token)
             
@@ -159,9 +150,9 @@ async def serve():
     await tokens_clt.connect()
     
     
-    add_AuthServiceServicer_to_server(AuthService(user_rep, tokens_clt), server)
-    server.add_insecure_port(f"[::]:{os.environ.get("AUTH_SERVICE_PORT", 50051)}")
-    print(f"Async gRPC Server started at port {os.environ.get("AUTH_SERVICE_PORT", 50051)}")
+    add_AccountServiceServicer_to_server(AccountService(user_rep, tokens_clt), server)
+    server.add_insecure_port(f"[::]:{os.environ.get("ACCOUNT_SERVICE_PORT", 50051)}")
+    print(f"Async gRPC Server started at port {os.environ.get("ACCOUNT_SERVICE_PORT", 50051)}")
     await server.start()
     try:
         await server.wait_for_termination()
