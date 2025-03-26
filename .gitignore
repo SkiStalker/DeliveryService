@@ -5,3 +5,4 @@
 **/**build**
 
 !**/.gitignore
+!**/__init__.py
