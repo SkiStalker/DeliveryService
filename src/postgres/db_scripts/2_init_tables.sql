@@ -11,6 +11,7 @@ create table if not exists company.public.account (
     email text,
     phone text,
     refresh_token text,
+    is_active boolean default TRUE,
     created_at timestamptz not null default NOW(),
     updated_at timestamptz not null default NOW()
 );
