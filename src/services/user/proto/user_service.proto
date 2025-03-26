@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package user;
+
+import "google/protobuf/timestamp.proto";
+
+service UserService {
+    rpc GetUserData (GetUserDataRequest) returns (GetUserDataResponse);
+    rpc UpdateUserData (UpdateUserDataRequest) returns (UpdateUserDataResponse);
+    rpc GetAllUsers (GetAllUsersRequest) returns (GetAllUsersResponse);
+    rpc DeactivateUser (DeactivateUserRequest) returns (DeactivateUserResponse);
+    rpc ReactivateUser (ReactivateUserRequest) returns (ReactivateUserResponse);
+    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+}
+
+message CreateUserRequest {
+    string username = 1;
+    string password = 2;
+    repeated string groups_ids = 3;
+    optional string first_name = 4;
+    optional string second_name = 5;
+    optional string patronymic = 6;
+    optional string email = 7;
+    optional string phone = 8;
+    optional google.protobuf.Timestamp birth = 9;
+}
+
+message CreateUserResponse {
+    int32 code = 1;
+    oneof CreateUserResponseOneOf {
+        string message = 2;
+        UserData user_data = 3;
+    }
+}
+
+message ReactivateUserRequest {
+    string user_id = 1;
+}
+
+message ReactivateUserResponse {
+    int32 code = 1;
+    optional string message = 2;
+}
+
+message DeactivateUserRequest {
+    string user_id = 1;
+}
+
+message DeactivateUserResponse {
+    int32 code = 1;
+    optional string message = 2;
+}
+
+message GetUserDataRequest {
+    string user_id = 1;
+}
+
+message GetUserDataResponse {
+    int32 code = 1;
+    oneof GetUserResponseOneOf {
+        string message = 2;
+        UserData user_data = 3;
+    }
+}
+
+message GetAllUsersRequest {
+    int32 page = 1;
+}
+
+message GetAllUsersResponse {
+    repeated UserData users = 1;
+}
+
+message UpdateUserDataRequest {
+    UserData user_data = 1;
+} 
+
+message UpdateUserDataResponse {
+    int32 code = 1;
+    oneof SetUserDataResponseOneOf {
+        string message = 2;
+        UserData user_data = 3;
+    }
+}
+
+
+message GroupData {
+    string id = 1;
+    optional string name = 2;
+}
+
+message GroupArray {
+    repeated GroupData arr = 1; 
+}
+
+message UserData {
+    string id = 1;
+    optional string username = 2;
+    optional string password = 3;
+    optional string first_name = 4;
+    optional string second_name = 5;
+    optional string patronymic = 6;
+    optional string email = 7;
+    optional string phone = 8;
+    optional google.protobuf.Timestamp birth = 9;
+    optional GroupArray groups = 10;
+}
