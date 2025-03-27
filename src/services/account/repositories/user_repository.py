@@ -3,9 +3,18 @@ import asyncpg
 
 from models.auth_user_model import AuthUserModel
 
-
-DATABASE_URL = f"postgresql://{os.environ.get("POSTGRES_USER", "postgres")}:{os.environ.get("POSTGRES_PASSWORD", "postgres")}@{os.environ.get("POSTGRES_HOST", "localhost")}:{os.environ.get("POSTGRES_PORT", "5432")}/{os.environ.get("POSTGRES_DB", "company")}"
-
+DATABASE_URL = (
+    f"postgresql://"
+    f"{os.environ.get("POSTGRES_USER", "postgres")}"
+    ":"
+    f"{os.environ.get("POSTGRES_PASSWORD", "postgres")}"
+    "@"
+    f"{os.environ.get("POSTGRES_HOST", "localhost")}"
+    ":"
+    f"{os.environ.get("POSTGRES_PORT", "5432")}"
+    "/"
+    f"{os.environ.get("POSTGRES_DB", "company")}"
+)
 
 class UserRepository:
     def __init__(self, connection_string: str = DATABASE_URL):

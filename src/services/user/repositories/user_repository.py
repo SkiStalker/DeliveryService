@@ -5,7 +5,18 @@ from models.user_model import UserModel
 from models.group_model import GroupModel
 
 
-DATABASE_URL = f"postgresql://{os.environ.get("POSTGRES_USER", "postgres")}:{os.environ.get("POSTGRES_PASSWORD", "postgres")}@{os.environ.get("POSTGRES_HOST", "localhost")}:{os.environ.get("POSTGRES_PORT", "5432")}/{os.environ.get("POSTGRES_DB", "company")}"
+DATABASE_URL = (
+    f"postgresql://"
+    f"{os.environ.get("POSTGRES_USER", "postgres")}"
+    ":"
+    f"{os.environ.get("POSTGRES_PASSWORD", "postgres")}"
+    "@"
+    f"{os.environ.get("POSTGRES_HOST", "localhost")}"
+    ":"
+    f"{os.environ.get("POSTGRES_PORT", "5432")}"
+    "/"
+    f"{os.environ.get("POSTGRES_DB", "company")}"
+)
 
 DB_PAGE_SIZE = int(os.environ.get("DB_PAGE_SIZE", "1000"))
 
