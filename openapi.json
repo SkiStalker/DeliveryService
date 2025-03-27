@@ -85,10 +85,9 @@
                 "operationId": "refresh_api_v1_account_refresh_post",
                 "requestBody": {
                     "content": {
-                        "application/json": {
+                        "application/x-www-form-urlencoded": {
                             "schema": {
-                                "type": "string",
-                                "title": "Refresh Body"
+                                "$ref": "#/components/schemas/Body_refresh_api_v1_account_refresh_post"
                             }
                         }
                     },
@@ -294,7 +293,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Unused",
+                        "description": "Successful Response",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -899,6 +898,24 @@
                     "password"
                 ],
                 "title": "Body_login_api_v1_account_token_post"
+            },
+            "Body_refresh_api_v1_account_refresh_post": {
+                "properties": {
+                    "refresh_token": {
+                        "type": "string",
+                        "title": "Refresh Token"
+                    },
+                    "grant_type": {
+                        "type": "string",
+                        "title": "Grant Type"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "refresh_token",
+                    "grant_type"
+                ],
+                "title": "Body_refresh_api_v1_account_refresh_post"
             },
             "BriefUserModel": {
                 "properties": {
