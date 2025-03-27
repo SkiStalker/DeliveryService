@@ -7,6 +7,7 @@ from api.v1.models.token_model import TokenModel
 from grpc_build.account_service_pb2 import AuthRequest, AuthResponse, CheckPermissionsRequest, CheckPermissionsResponse, LogoutRequest, LogoutResponse, RefreshRequest, RefreshResponse
 from grpc_build.account_service_pb2_grpc import AccountServiceStub
 
+from api.v1.routes.responses.account_responses import token_responses, refresh_responses, logout_responses
 
 from context import app
 
@@ -60,7 +61,7 @@ def check_permission(permission: str):
     return Depends(check_permissions_wrap)
 
 
-@router.post("/token", response_model=TokenModel)
+@router.post("/token", response_model=TokenModel, responses=token_responses)
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     account_stub: AccountServiceStub = app.state.account_stub
     resp: AuthResponse = await account_stub.Auth(AuthRequest(username=form_data.username, password=form_data.password))
@@ -70,7 +71,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     else:
         make_http_error(resp)
 
-@router.post("/refresh", response_model=TokenModel)
+@router.post("/refresh", response_model=TokenModel, responses=refresh_responses)
 async def refresh(refresh_token: str = Depends(get_refresh_token)):
     account_stub: AccountServiceStub = app.state.account_stub
     resp: RefreshResponse = await account_stub.Refresh(RefreshRequest(refresh_token=refresh_token))
@@ -81,7 +82,7 @@ async def refresh(refresh_token: str = Depends(get_refresh_token)):
         make_http_error(resp)
 
 
-@router.post("/logout")
+@router.post("/logout", responses=logout_responses)
 async def logout(token: str = Depends(oauth2_scheme)):
     account_stub: AccountServiceStub = app.state.account_stub
     resp: LogoutResponse = await account_stub.Logout(LogoutRequest(access_token=token))
