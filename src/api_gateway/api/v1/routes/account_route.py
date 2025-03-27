@@ -1,5 +1,5 @@
 import json
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, Form, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from lib.http_tools import make_http_error
@@ -15,39 +15,16 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/account/token")
 
 router = APIRouter(prefix="/api/v1/account", tags=["account"])
 
-def parse_refresh_token(refresh_token_body: str) -> dict | None:
-    json_body: dict | None = None
-    try:
-        json_body = json.loads(refresh_token_body)
-    except:
-        try:
-            json_body = {js_item[0] : js_item[1]  for js_item in [[*item.split("=")] for item in refresh_token_body.split("&")]}
-        except:
-            pass
-    return json_body
-
-def get_refresh_token(refresh_body: str =  Body(...)):
-
-    json_refresh_token = parse_refresh_token(refresh_body)
+def get_refresh_token(refresh_token: str =  Form(...), grant_type: str = Form(...)):
     
-    if json_refresh_token:
-        refresh_token = json_refresh_token.get("refresh_token", None)
-        if refresh_token:
-            return refresh_token
-        else:
-            raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Refresh token was not provided",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    else:
+    if grant_type != "refresh_token":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Refresh token was not provided",
+            detail="Unknown token type",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    return refresh_token
 
 
 def check_permission(permission: str):
