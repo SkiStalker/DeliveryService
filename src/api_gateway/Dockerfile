@@ -11,8 +11,9 @@ ADD api_gateway/main.py ./
 
 ADD api_gateway/openapi.json ./
 
-ADD api_gateway/models ./models
-ADD api_gateway/routes ./routes
+ADD api_gateway/api ./api
+
+
 ADD api_gateway/lib ./lib
 
 COPY services/account/proto/ ./proto/
