@@ -11,7 +11,9 @@ class GroupModel(BaseModel):
 
     @classmethod
     def from_grpc_message(cls, grpc_message: GroupData):
-        return GroupModel(**{desc.name : value for desc, value in grpc_message.ListFields()})
+        return GroupModel(
+            **{desc.name: value for desc, value in grpc_message.ListFields()}
+        )
 
     @classmethod
     def from_record(cls, data: Record):

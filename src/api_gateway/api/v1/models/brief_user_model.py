@@ -8,11 +8,17 @@ class BriefUserModel(BaseModel):
     username: str
     first_name: Optional[str] = None
     second_name: Optional[str] = None
-    
+
     @classmethod
     def from_grpc_message(cls, grpc_message: UserData):
         try:
             model_fields = cls.model_fields.keys()
-            return BriefUserModel(**{desc.name : value for desc, value in grpc_message.ListFields() if desc.name in model_fields})
+            return BriefUserModel(
+                **{
+                    desc.name: value
+                    for desc, value in grpc_message.ListFields()
+                    if desc.name in model_fields
+                }
+            )
         except ValidationError:
             return None

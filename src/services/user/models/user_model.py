@@ -18,20 +18,22 @@ class UserModel(BaseModel):
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
     groups: Optional[list[GroupModel]] = None
-    
-    
+
     @classmethod
     def from_grpc_message(cls, grpc_message: UserData):
         try:
-            user_data = {desc.name : value for desc, value in grpc_message.ListFields()}
-            
+            user_data = {desc.name: value for desc, value in grpc_message.ListFields()}
+
             if "groups" in user_data:
-                user_data["groups"] = [GroupModel.from_grpc_message(group) for group in user_data["groups"].arr]
-            
+                user_data["groups"] = [
+                    GroupModel.from_grpc_message(group)
+                    for group in user_data["groups"].arr
+                ]
+
             return UserModel(**user_data)
         except ValidationError:
             return None
-    
+
     @classmethod
     def from_record(cls, data: Record):
         try:
@@ -44,9 +46,9 @@ class UserModel(BaseModel):
         res["id"] = str(res["id"])
         if "email" in res:
             res["email"] = str(res["email"])
-        
+
         groups = res.pop("groups", None)
-        
+
         if groups:
             groups_arr = []
             for group in groups:
