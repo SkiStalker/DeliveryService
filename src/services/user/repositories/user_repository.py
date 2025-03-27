@@ -5,7 +5,18 @@ from models.user_model import UserModel
 from models.group_model import GroupModel
 
 
-DATABASE_URL = f"postgresql://{os.environ.get("POSTGRES_USER", "postgres")}:{os.environ.get("POSTGRES_PASSWORD", "postgres")}@{os.environ.get("POSTGRES_HOST", "localhost")}:{os.environ.get("POSTGRES_PORT", "5432")}/{os.environ.get("POSTGRES_DB", "company")}"
+DATABASE_URL = (
+    f"postgresql://"
+    f"{os.environ.get("POSTGRES_USER", "postgres")}"
+    ":"
+    f"{os.environ.get("POSTGRES_PASSWORD", "postgres")}"
+    "@"
+    f"{os.environ.get("POSTGRES_HOST", "localhost")}"
+    ":"
+    f"{os.environ.get("POSTGRES_PORT", "5432")}"
+    "/"
+    f"{os.environ.get("POSTGRES_DB", "company")}"
+)
 
 DB_PAGE_SIZE = int(os.environ.get("DB_PAGE_SIZE", "1000"))
 
@@ -30,7 +41,8 @@ class UserRepository:
             conn: asyncpg.Connection
             async with conn.transaction():
                 rows = await conn.fetch(
-                    "SELECT account.id, account.username, account.first_name, account.second_name from account WHERE is_active = TRUE LIMIT $1 OFFSET $2",
+                    "SELECT account.id, account.username, account.first_name, account.second_name from account WHERE "
+                    "is_active = TRUE LIMIT $1 OFFSET $2",
                     self._db_page_size,
                     page * self._db_page_size,
                 )
@@ -43,7 +55,8 @@ class UserRepository:
             async with conn.transaction():
                 return UserModel.from_record(
                     await conn.fetchrow(
-                        "SELECT account.id, account.username, account.first_name, account.second_name, account.patronymic, account.email, account.phone FROM account WHERE id = $1 and is_active = TRUE",
+                        "SELECT account.id, account.username, account.first_name, account.second_name, account.patronymic, "
+                        "account.email, account.phone FROM account WHERE id = $1 and is_active = TRUE",
                         user_id,
                     )
                 )
@@ -53,7 +66,8 @@ class UserRepository:
             conn: asyncpg.Connection
             async with conn.transaction():
                 rows = await conn.fetch(
-                    'SELECT "group".id, "group".name from "group" join account_group on account_group.group_id = "group".id join account on account_group.account_id = account.id WHERE account.id = $1',
+                    'SELECT "group".id, "group".name from "group" join account_group on account_group.group_id = "group".id '
+                    "join account on account_group.account_id = account.id WHERE account.id = $1",
                     user_id,
                 )
 
@@ -105,13 +119,15 @@ class UserRepository:
 
                 if len(update_str):
                     updated_user = await conn.fetchrow(
-                        f"UPDATE company.public.account SET {update_str} WHERE id = $1 and is_active = TRUE RETURNING id, username,first_name, second_name, patronymic, email, phone",
+                        f"UPDATE company.public.account SET {update_str} WHERE id = $1 and is_active = TRUE RETURNING id, "
+                        "username,first_name, second_name, patronymic, email, phone",
                         user.id,
                         *usr_dmp.values(),
                     )
                 else:
                     updated_user = await conn.fetchrow(
-                        "SELECT account.id, account.username, account.first_name, account.second_name, account.patronymic, account.email, account.phone from company.public.account WHERE id = $1 and is_active = TRUE",
+                        "SELECT account.id, account.username, account.first_name, account.second_name, account.patronymic, "
+                        "account.email, account.phone from company.public.account WHERE id = $1 and is_active = TRUE",
                         user.id,
                     )
 
@@ -122,7 +138,8 @@ class UserRepository:
                     group_models = []
                     for group in groups:
                         updated_account_group = await conn.fetchrow(
-                            f'INSERT INTO account_group (account_id, group_id) VALUES ($1, $2) RETURNING account_group.id, (SELECT "group".name from "group" WHERE "group".id = account_group.id) as name'
+                            f"INSERT INTO account_group (account_id, group_id) VALUES ($1, $2) RETURNING account_group.id, "
+                            '(SELECT "group".name from "group" WHERE "group".id = account_group.id) as name'
                         )
                         if updated_account_group is None:
                             raise ValueError(user)
@@ -153,14 +170,16 @@ class UserRepository:
                     raise ValueError(user)
                 else:
                     created_user = await conn.fetchrow(
-                        f"INSERT INTO account ({insert_keys}) VALUES ({insert_values}) RETURNING account.id, account.username, account.first_name, account.second_name, account.patronymic, account.email, account.phone",
+                        f"INSERT INTO account ({insert_keys}) VALUES ({insert_values}) RETURNING account.id, account.username, "
+                        "account.first_name, account.second_name, account.patronymic, account.email, account.phone",
                         **usr_dmp.values(),
                     )
 
                     group_models = []
                     for group in groups:
                         created_account_group = await conn.fetchrow(
-                            f'INSERT INTO account_group (account_id, group_id) VALUES ($1, $2) RETURNING account_group.id, (SELECT "group".name from "group" WHERE "group".id = account_group.id) as name'
+                            f"INSERT INTO account_group (account_id, group_id) VALUES ($1, $2) RETURNING account_group.id, "
+                            '(SELECT "group".name from "group" WHERE "group".id = account_group.id) as name'
                         )
                         if created_account_group is None:
                             raise ValueError(user)
