@@ -8,9 +8,6 @@ RUN pip install -r requirements.txt
 ADD api_gateway/context.py ./
 ADD api_gateway/main.py ./
 
-
-ADD api_gateway/openapi.json ./
-
 ADD api_gateway/api ./api
 
 
