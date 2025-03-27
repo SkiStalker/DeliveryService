@@ -28,6 +28,17 @@ async def lifespan(app: FastAPI):
     yield
     await disconnect_from_grpc_user(app)
     await disconnect_from_grpc_account(app)
-    
 
-app = FastAPI(lifespan=lifespan)
+
+tags_metadata = [
+    {
+        "name": "users",
+        "description": "Get and update information about all users",
+    },
+    {
+        "name": "account",
+        "description": "Login, get tokens and manage self account information",
+    },
+]
+
+app = FastAPI(lifespan=lifespan, openapi_tags=tags_metadata)

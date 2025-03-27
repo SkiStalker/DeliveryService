@@ -23,125 +23,96 @@ class UserService(UserServiceServicer):
     
     async def GetUserData(self, request: GetUserDataRequest, context: ServicerContext) -> GetUserDataResponse:
         user_id = request.user_id
-        
-        user = await self._user_rep.get_user_by_id(user_id)
-        
-        groups = await self._user_rep.get_user_groups(user_id)
-        
-        user.groups = groups
-        
-        if user:
-            return GetUserDataResponse(code=200, user_data=UserData(
-                **user.to_grpc()
-            ))
-        else:
-            return GetUserDataResponse(code=404, message="User not found or deactivated")
+        try:
+            user = await self._user_rep.get_user_by_id(user_id)
+            
+            groups = await self._user_rep.get_user_groups(user_id)
+            
+            user.groups = groups
+            
+            if user:
+                return GetUserDataResponse(code=200, user_data=user.to_UserData())
+            else:
+                return GetUserDataResponse(code=404, message="User not found or deactivated")
+        except Exception as ex:
+            return GetUserDataResponse(code=500, message=f"Error : {ex}, args : {ex.args}")
     
     async def CreateUser(self, request: CreateUserRequest, context) -> CreateUserResponse:
-        user = self._user_rep.get_user_by_username(request.username)
-        if user:
-            return CreateUserResponse(code=409, message="User with specified username already exist")
-        else:
-            create_user_data = UserModel(username=request.username)
-            
-            create_user_data.password = pwd_context.hash(request.password)
-            
-            if request.HasField("first_name"):
-                create_user_data.first_name = request.first_name
-            
-            if request.HasField("second_name"):
-                create_user_data.second_name = request.second_name
-                
-            if request.HasField("patronymic"):
-                create_user_data.patronymic = request.patronymic
-            
-            if request.HasField("birth"):
-                create_user_data.birth = request.birth
-            
-            if request.HasField("email"):
-                create_user_data.email = request.email
-            
-            if request.HasField("phone"):
-                create_user_data.phone = request.phone
-            
-            
-            create_user_data.groups = []
-            
-            for group_id in request.groups_ids:
-                create_user_data.groups.append(GroupModel(group_id))
-                
-            created_user = await self._user_rep.create_user(create_user_data)
-            
-            if created_user:
-                return CreateUserResponse(code=201, user_data=UserData(**created_user.to_grpc()))
+        user_data = request.user_data
+        
+        if not user_data.HasField("id") or not user_data.HasField("password") or not user_data.HasField("groups") or len(user_data.groups.arr) == 0:
+            return CreateUserResponse(code=400, message="Missing required fields") 
+        try:
+            user = self._user_rep.get_user_by_username(user_data.username)
+            if user:
+                return CreateUserResponse(code=409, message="User with specified username already exist")
             else:
-                return CreateUserResponse(code=400, message="Can not create user")
+                
+                create_user_model = UserModel.from_grpc_message(user_data)
+                
+                create_user_model.password = pwd_context.hash(create_user_model.password)
+                    
+                created_user = await self._user_rep.create_user(create_user_model)
+                
+                if created_user:
+                    return CreateUserResponse(code=201, user_data=created_user.to_UserData())
+                else:
+                    return CreateUserResponse(code=400, message="Can not create user")
+        except Exception as ex:
+            return CreateUserResponse(code=500, message=f"Error : {ex}, args : {ex.args}")
         
         
     
     async def UpdateUserData(self, request: UpdateUserDataRequest, context: ServicerContext) -> UpdateUserDataResponse:
         user_data = request.user_data
-        update_user_data = UserModel(id=user_data.id)
-        
-        if user_data.HasField("username"):
-            update_user_data.username = user_data.username
-        
-        if user_data.HasField("password"):
-            update_user_data.password = pwd_context.hash(user_data.password)
-        
-        if user_data.HasField("first_name"):
-            update_user_data.first_name = user_data.first_name
-        
-        if user_data.HasField("second_name"):
-            update_user_data.second_name = user_data.second_name
+        try:
+            update_user = UserModel.from_grpc_message(user_data)
             
-        if user_data.HasField("patronymic"):
-            update_user_data.patronymic = user_data.patronymic
+            if update_user.username is not None:
+                check_user = await self._user_rep.get_user_by_username(update_user.username)
+                if check_user is not None:
+                    return UpdateUserDataResponse(code=409, message="User with specified username already exist")
+            
+            if update_user.password is not None:
+                update_user.password = pwd_context.hash(update_user.password)
+            
+            updated_user_model = await self._user_rep.update_user(update_user)
+            
+            if updated_user_model:
+                return UpdateUserDataResponse(code=200, user_data=updated_user_model.to_UserData())
+            else:
+                return UpdateUserDataResponse(code=404, message="User not found or deactivated")
+        except Exception as ex:
+            return UpdateUserDataResponse(code=500, message=f"Error : {ex}, args : {ex.args}")
         
-        if user_data.HasField("birth"):
-            update_user_data.birth = user_data.birth
-        
-        if user_data.HasField("email"):
-            update_user_data.email = user_data.email
-        
-        if user_data.HasField("phone"):
-            update_user_data.phone = user_data.phone
-        
-        if user_data.HasField("groups"):
-            groups = []
-            for group in user_data.groups.arr:
-                groups.append(GroupModel(id=group.id))
-            update_user_data.groups = groups
-        
-        updated_user = await self._user_rep.update_user(update_user_data)
-        
-        if updated_user:
-            return UpdateUserDataResponse(code=200, user_data=UserData(**updated_user.to_grpc()))
-        else:
-            return UpdateUserDataResponse(code=404, message="User not found or deactivated")
-    
     async def GetAllUsers(self, request: GetAllUsersRequest, context: ServicerContext) -> GetAllUsersResponse:
         page = request.page
-        
-        users = await self._user_rep.get_all_users(page)
-        
-        return GetAllUsersResponse(users=[UserData(**user.to_grpc()) for user in users])
+        try:
+            users = await self._user_rep.get_all_users(page)
+            
+            return GetAllUsersResponse(users=[user.to_UserData() for user in users])
+        except Exception as ex:
+            return GetAllUsersResponse(code=500, message=f"Error : {ex}, args : {ex.args}")
     
     async def ReactivateUser(self, request: ReactivateUserRequest, context: ServicerContext) -> ReactivateUserResponse:
         user_id = request.user_id
-        
-        if await self._user_rep.reactivate_user(user_id):
-            return ReactivateUserResponse(code=200)
-        else:
-            return ReactivateUserResponse(code=404, message="User not found or already activated")
+        try:
+            if await self._user_rep.reactivate_user(user_id):
+                return ReactivateUserResponse(code=200)
+            else:
+                return ReactivateUserResponse(code=404, message="User not found or already activated")
+        except Exception as ex:
+            return ReactivateUserResponse(code=500, message=f"Error : {ex}, args : {ex.args}")
     
     async def DeactivateUser(self, request: DeactivateUserRequest, context: ServicerContext) -> DeactivateUserResponse:
         user_id = request.user_id
-        
-        if await self._user_rep.reactivate_user(user_id):
-            return DeactivateUserResponse(code=200)
-        else:
-            return DeactivateUserResponse(code=404, message="User not found or already deactivated")
+        try:
+            if await self._user_rep.reactivate_user(user_id):
+                return DeactivateUserResponse(code=200)
+            else:
+                return DeactivateUserResponse(code=404, message="User not found or already deactivated")
+        except Exception as ex:
+            return DeactivateUserResponse(code=500, message=f"Error : {ex}, args : {ex.args}")
         
 
 async def serve():

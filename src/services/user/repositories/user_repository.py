@@ -41,7 +41,7 @@ class UserRepository:
         async with self._db_pool.acquire() as conn:
             conn: asyncpg.Connection
             async with conn.transaction():
-                rows = await conn.fetch("SELECT group.id, group.name from group join account_group on account_group.group_id = group.id join account on account_group.account_id = account.id WHERE account.id = $1", user_id)
+                rows = await conn.fetch('SELECT "group".id, "group".name from "group" join account_group on account_group.group_id = "group".id join account on account_group.account_id = account.id WHERE account.id = $1', user_id)
                 
                 return [GroupModel.from_record(row) for row in rows]
     
@@ -87,7 +87,7 @@ class UserRepository:
                     await conn.execute("DELETE FROM account_group WHERE account_id = $1", user.id)
                     group_models = []
                     for group in groups:
-                        updated_account_group = await conn.fetchrow(f"INSERT INTO account_group (account_id, group_id) VALUES ($1, $2) RETURNING account_group.id, (SELECT group.name from group WHERE group.id = account_group.id) as group_name")
+                        updated_account_group = await conn.fetchrow(f'INSERT INTO account_group (account_id, group_id) VALUES ($1, $2) RETURNING account_group.id, (SELECT "group".name from "group" WHERE "group".id = account_group.id) as name')
                         if updated_account_group is None:
                             raise ValueError(user)
                         else:
@@ -120,7 +120,7 @@ class UserRepository:
                     
                     group_models = []
                     for group in groups:
-                        created_account_group = await conn.fetchrow(f"INSERT INTO account_group (account_id, group_id) VALUES ($1, $2) RETURNING account_group.id, (SELECT group.name from group WHERE group.id = account_group.id) as group_name")
+                        created_account_group = await conn.fetchrow(f'INSERT INTO account_group (account_id, group_id) VALUES ($1, $2) RETURNING account_group.id, (SELECT "group".name from "group" WHERE "group".id = account_group.id) as name')
                         if created_account_group is None:
                             raise ValueError(user)
                         else:

@@ -1,21 +1,18 @@
-import functools
 import json
-from typing import Callable, Literal
-from fastapi import APIRouter, Body, Depends, FastAPI, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from fastapi.types import DecoratedCallable
 
 from lib.http_tools import make_http_error
-from models.token_model import TokenModel
+from api.v1.models.token_model import TokenModel
 from grpc_build.account_service_pb2 import AuthRequest, AuthResponse, CheckPermissionsRequest, CheckPermissionsResponse, LogoutRequest, LogoutResponse, RefreshRequest, RefreshResponse
 from grpc_build.account_service_pb2_grpc import AccountServiceStub
 
 
 from context import app
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/account/token")
 
-router = APIRouter(prefix="/account", tags=["account"])
+router = APIRouter(prefix="/api/v1/account", tags=["account"])
 
 def parse_refresh_token(refresh_token_body: str) -> dict | None:
     json_body: dict | None = None

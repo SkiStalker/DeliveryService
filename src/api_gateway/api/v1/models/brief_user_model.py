@@ -12,6 +12,7 @@ class BriefUserModel(BaseModel):
     @classmethod
     def from_grpc_message(cls, grpc_message: UserData):
         try:
-            return BriefUserModel(**{desc.name : value for desc, value in grpc_message.ListFields()})
+            model_fields = cls.model_fields.keys()
+            return BriefUserModel(**{desc.name : value for desc, value in grpc_message.ListFields() if desc.name in model_fields})
         except ValidationError:
             return None

@@ -10,9 +10,10 @@ class GroupModel(BaseModel):
     
     @classmethod
     def from_grpc_message(cls, grpc_message: GroupData):
-        return GroupModel(**{desc.name : value for desc, value in grpc_message.ListFields()})
+        model_fields = cls.model_fields.keys()
+        return GroupModel(**{desc.name : value for desc, value in grpc_message.ListFields() if desc.name in model_fields})
 
-    def to_grpc(self):
+    def to_GroupData(self) -> GroupData:
         res = self.model_dump(exclude_none=True)
         res["id"] = str(res["id"])
-        return res
+        return GroupData(**res)

@@ -3,12 +3,12 @@ from fastapi import FastAPI
 import os
 from context import app
 
-from routes.account_route import router as account_router
-from routes.user_route import router as user_router
+from api.v1.routes.account_route import router as account_router_v1
+from api.v1.routes.user_route import router as user_router_v1
 
 
-app.include_router(account_router)
-app.include_router(user_router)
+app.include_router(account_router_v1)
+app.include_router(user_router_v1)
 
 # Запуск сервера
 # http://localhost:8000/openapi.json swagger

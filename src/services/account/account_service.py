@@ -43,24 +43,27 @@ class AccountService(AccountServiceServicer):
 
        
     async def Auth(self, request: AuthRequest, context: ServicerContext) -> AuthResponse:
-        user = await self._user_rep.get_user_by_username(request.username)
-        if user is not None:
-            if pwd_context.verify(request.password, user.password):
-                permissions = await self._user_rep.get_permissions(user.username)
-                
-                access_token = create_token(str(user.id), permissions)
-                refresh_token = create_token(str(user.id), permissions, True)
-                
-                await self._tokens_clt.update_tokens_pair(access_token, refresh_token)
-                
-                await self._user_rep.update_refresh_token(str(user.id), refresh_token)
-                
-                return AuthResponse(code=200, tokens=TokenPair(access_token=access_token, 
-                                                            refresh_token=refresh_token))
+        try:
+            user = await self._user_rep.get_user_by_username(request.username)
+            if user is not None:
+                if pwd_context.verify(request.password, user.password):
+                    permissions = await self._user_rep.get_permissions(user.username)
+                    
+                    access_token = create_token(str(user.id), permissions)
+                    refresh_token = create_token(str(user.id), permissions, True)
+                    
+                    await self._tokens_clt.update_tokens_pair(access_token, refresh_token)
+                    
+                    await self._user_rep.update_refresh_token(str(user.id), refresh_token)
+                    
+                    return AuthResponse(code=200, tokens=TokenPair(access_token=access_token, 
+                                                                refresh_token=refresh_token))
+                else:
+                    return AuthResponse(code=401, message="Incorrect login or password")
             else:
-                return AuthResponse(code=401, message="Incorrect login or password")
-        else:
-            return AuthResponse(code=404, message="User with this login not found")
+                return AuthResponse(code=404, message="User with this login not found")
+        except Exception as ex:
+            return AuthResponse(code=500, message=f"Error : {ex}, args : {ex.args}")
 
 
 
@@ -94,26 +97,29 @@ class AccountService(AccountServiceServicer):
         except JWTError:
             return RefreshResponse(code=401, message="Invalid refresh token")
         except Exception as ex:
-            return RefreshResponse(code=401, message=f"Error : {ex}, args : {ex.args}")
+            return RefreshResponse(code=500, message=f"Error : {ex}, args : {ex.args}")
     
     async def CheckPermissions(self, request: CheckPermissionsRequest, context: ServicerContext):
         access_token = request.access_token
-        if await self._tokens_clt.is_access_token_in_black_list(access_token):
-            return CheckPermissionsResponse(code=403, message="Access token in blacklist")
-        else:
-            try:
-                payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
-                permissions: list[str] = payload.get("permissions")
-                if request.permission in permissions:
-                    return CheckPermissionsResponse(code=200)
-                else:
-                    return CheckPermissionsResponse(code=403, message="Access denied")
-            except jwt.ExpiredSignatureError:
-                return RefreshResponse(code=401, message="Refresh token expired")
-            except JWTError:
-                return RefreshResponse(code=401, message="Invalid refresh token")
-            except Exception as ex:
-                return RefreshResponse(code=401, message=f"Error : {ex}, args : {ex.args}")
+        try:
+            if await self._tokens_clt.is_access_token_in_black_list(access_token):
+                return CheckPermissionsResponse(code=403, message="Access token in blacklist")
+            else:
+                try:
+                    payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
+                    permissions: list[str] = payload.get("permissions")
+                    if request.permission in permissions:
+                        return CheckPermissionsResponse(code=200)
+                    else:
+                        return CheckPermissionsResponse(code=403, message="Access denied")
+                except jwt.ExpiredSignatureError:
+                    return RefreshResponse(code=401, message="Access token expired")
+                except JWTError:
+                    return RefreshResponse(code=401, message="Invalid refresh token")
+                except Exception as ex:
+                    return RefreshResponse(code=500, message=f"Error : {ex}, args : {ex.args}")
+        except Exception as ex:
+            return RefreshResponse(code=500, message=f"Error : {ex}, args : {ex.args}")      
         
     async def Logout(self, request: LogoutRequest, context: ServicerContext) -> LogoutResponse:
         access_token = request.access_token
@@ -136,7 +142,7 @@ class AccountService(AccountServiceServicer):
         except JWTError:
             return LogoutResponse(code=401, message="Invalid refresh token")
         except Exception as ex:
-            return LogoutResponse(code=401, message=f"Error : {ex}, args : {ex.args}")
+            return LogoutResponse(code=500, message=f"Error : {ex}, args : {ex.args}")
 
 async def serve():
 

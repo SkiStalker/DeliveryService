@@ -1,16 +1,14 @@
-# GET /users - Получить всех пользователей (требует аутентификации)
-from typing import List
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from pydantic import UUID4
 
-from models.brief_user_model import BriefUserModel
-from models.id_array_model import IDArrayModel
+from api.v1.models.brief_user_model import BriefUserModel
 from lib.http_tools import make_http_error
-from routes.account_route import check_permission
-from models.user_model import UserModel
+from api.v1.routes.account_route import check_permission
+from api.v1.models.user_model import UserModel
 
 from grpc_build.user_service_pb2_grpc import UserServiceStub
+from grpc_build.user_service_pb2 import GetAllUsersRequest, GetAllUsersResponse, GetUserDataRequest, GetUserDataResponse, CreateUserRequest, CreateUserResponse, UpdateUserDataRequest, UpdateUserDataResponse, DeactivateUserRequest, DeactivateUserResponse, ReactivateUserRequest, ReactivateUserResponse
 
 from grpc_build.user_service_pb2 import GetAllUsersRequest, GetAllUsersResponse, GetUserDataRequest, GetUserDataResponse, CreateUserRequest, CreateUserResponse, UpdateUserDataRequest, UpdateUserDataResponse, DeactivateUserRequest, DeactivateUserResponse, ReactivateUserRequest, ReactivateUserResponse, UserData
 
@@ -18,11 +16,11 @@ from grpc_build.user_service_pb2 import GetAllUsersRequest, GetAllUsersResponse,
 from context import app 
 
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(prefix="/api/v1/users", tags=["users"])
 
 users_db = []
 
-
+# GET /users - Получить всех пользователей (требует аутентификации)
 @router.get("/", response_model=list[BriefUserModel], dependencies=[check_permission("READ_USER")])
 async def get_users():
     user_stub: UserServiceStub = app.state.user_stub
@@ -34,7 +32,7 @@ async def get_users():
 @router.get("/{user_id}", response_model=UserModel, dependencies=[check_permission("READ_USER")])
 async def get_user(user_id: UUID4):
     user_stub: UserServiceStub = app.state.user_stub
-    resp: GetUserDataResponse = await user_stub.GetUserData(GetUserDataRequest(user_id=user_id))
+    resp: GetUserDataResponse = await user_stub.GetUserData(GetUserDataRequest(user_id=str(user_id)))
     
     if resp.code == 200:
         return UserModel.from_grpc_message(resp.user_data)
@@ -59,7 +57,7 @@ async def update_user(user_id: UUID4, updated_user: UserModel):
     
     updated_user.id = user_id
     
-    resp: UpdateUserDataResponse = await user_stub.UpdateUserData(UpdateUserDataRequest(user_data=UserData(**updated_user.to_grpc())))
+    resp: UpdateUserDataResponse = await user_stub.UpdateUserData(UpdateUserDataRequest(user_data=updated_user.to_UserData()))
     
     if resp.code == 200:
         return UserModel.from_grpc_message(resp.user_data)
@@ -74,7 +72,7 @@ async def delete_user(user_id: UUID4):
     resp: DeactivateUserResponse = await user_stub.DeactivateUser(DeactivateUserRequest(user_id=user_id))
     
     if resp.code == 200:
-        return 
+        return {"detail": "User successfully deactivated"}
     else:
         make_http_error(resp)
 
@@ -83,9 +81,9 @@ async def delete_user(user_id: UUID4):
 async def activate_user(user_id: UUID4):
     user_stub: UserServiceStub = app.state.user_stub
     
-    resp: DeactivateUserResponse = await user_stub.DeactivateUser(DeactivateUserRequest(user_id=user_id))
+    resp: ReactivateUserRequest = await user_stub.DeactivateUser(ReactivateUserResponse(user_id=user_id))
     
     if resp.code == 200:
-        return 
+        return {"detail": "User successfully reactivated"}
     else:
         make_http_error(resp)
