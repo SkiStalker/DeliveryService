@@ -4,14 +4,14 @@ create table if not exists company.public.account (
     id uuid primary key default uuid_generate_v4(),
     username text not null,
     password text not null,
-    first_name text,
-    second_name text,
+    first_name text not null,
+    second_name text not null,
     patronymic text,
     birth timestamptz,
     email text,
     phone text,
     refresh_token text,
-    is_active boolean default TRUE,
+    is_active boolean not null default TRUE,
     created_at timestamptz not null default NOW(),
     updated_at timestamptz not null default NOW()
 );
@@ -40,8 +40,10 @@ create table if not exists company.public.cargo (
     title text not null,
     type text not null,
     description text not null,
+    creator_id uuid not null,
     created_at timestamptz not null default NOW(),
-    updated_at timestamptz not null default NOW()
+    updated_at timestamptz not null default NOW(),
+    constraint fk_creator foreign key (creator_id) references company.public.account(id)
 );
 
 
