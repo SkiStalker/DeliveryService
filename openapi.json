@@ -201,202 +201,13 @@
                 ]
             }
         },
-        "/api/v1/users/": {
+        "/api/v1/user/{user_id}": {
             "get": {
                 "tags": [
-                    "users"
-                ],
-                "summary": "Get Users",
-                "operationId": "get_users_api_v1_users__get",
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "items": {
-                                        "$ref": "#/components/schemas/BriefUserModel"
-                                    },
-                                    "type": "array",
-                                    "title": "Response Get Users Api V1 Users  Get"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Invalid access token",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "detail": {
-                                            "type": "string",
-                                            "title": "Error info"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Access to resource denied",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "detail": {
-                                            "type": "string",
-                                            "title": "Error info"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Refresh token failed",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "detail": {
-                                            "type": "string",
-                                            "title": "Error info"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "OAuth2PasswordBearer": []
-                    }
-                ]
-            },
-            "post": {
-                "tags": [
-                    "users"
-                ],
-                "summary": "Create User",
-                "operationId": "create_user_api_v1_users__post",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/UserModel"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/UserModel"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Invalid access token",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "detail": {
-                                            "type": "string",
-                                            "title": "Error info"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Access to resource denied",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "detail": {
-                                            "type": "string",
-                                            "title": "Error info"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Refresh token failed",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "detail": {
-                                            "type": "string",
-                                            "title": "Error info"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "409": {
-                        "description": "User already exists",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "detail": {
-                                            "type": "string",
-                                            "title": "Error info"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "201": {
-                        "description": "User successfully created",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/UserModel"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HTTPValidationError"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "OAuth2PasswordBearer": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/users/{user_id}": {
-            "get": {
-                "tags": [
-                    "users"
+                    "user"
                 ],
                 "summary": "Get User",
-                "operationId": "get_user_api_v1_users__user_id__get",
+                "operationId": "get_user_api_v1_user__user_id__get",
                 "security": [
                     {
                         "OAuth2PasswordBearer": []
@@ -499,10 +310,10 @@
             },
             "put": {
                 "tags": [
-                    "users"
+                    "user"
                 ],
                 "summary": "Update User",
-                "operationId": "update_user_api_v1_users__user_id__put",
+                "operationId": "update_user_api_v1_user__user_id__put",
                 "security": [
                     {
                         "OAuth2PasswordBearer": []
@@ -525,7 +336,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/UserModel"
+                                "$ref": "#/components/schemas/UpdateUserModel"
                             }
                         }
                     }
@@ -630,10 +441,10 @@
             },
             "delete": {
                 "tags": [
-                    "users"
+                    "user"
                 ],
                 "summary": "Delete User",
-                "operationId": "delete_user_api_v1_users__user_id__delete",
+                "operationId": "delete_user_api_v1_user__user_id__delete",
                 "security": [
                     {
                         "OAuth2PasswordBearer": []
@@ -733,13 +544,331 @@
                 }
             }
         },
-        "/api/v1/users/reactivate": {
+        "/api/v1/user/find_user": {
+            "get": {
+                "tags": [
+                    "user"
+                ],
+                "summary": "Get User By Username",
+                "operationId": "get_user_by_username_api_v1_user_find_user_get",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "username",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Username"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserModel"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "title": "Error info",
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "description": "Invalid access token"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "title": "Error info",
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "description": "Access to resource denied"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "title": "Error info",
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "description": "Refresh token failed"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "title": "Error info",
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "description": "User not found"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/search_users": {
             "post": {
                 "tags": [
-                    "users"
+                    "user"
+                ],
+                "summary": "Search Users By First Name Last Name",
+                "operationId": "search_users_by_first_name_last_name_api_v1_user_search_users_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Body_search_users_by_first_name_last_name_api_v1_user_search_users_post"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/BriefUserModel"
+                                    },
+                                    "type": "array",
+                                    "title": "Response Search Users By First Name Last Name Api V1 User Search Users Post"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid access token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string",
+                                            "title": "Error info"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Access to resource denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string",
+                                            "title": "Error info"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Refresh token failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string",
+                                            "title": "Error info"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/user/": {
+            "post": {
+                "tags": [
+                    "user"
+                ],
+                "summary": "Create User",
+                "operationId": "create_user_api_v1_user__post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateUserModel"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserModel"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid access token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string",
+                                            "title": "Error info"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Access to resource denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string",
+                                            "title": "Error info"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Refresh token failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string",
+                                            "title": "Error info"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "User already exists",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string",
+                                            "title": "Error info"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "User successfully created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserModel"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/user/reactivate": {
+            "post": {
+                "tags": [
+                    "user"
                 ],
                 "summary": "Activate User",
-                "operationId": "activate_user_api_v1_users_reactivate_post",
+                "operationId": "activate_user_api_v1_user_reactivate_post",
                 "security": [
                     {
                         "OAuth2PasswordBearer": []
@@ -917,6 +1046,41 @@
                 ],
                 "title": "Body_refresh_api_v1_account_refresh_post"
             },
+            "Body_search_users_by_first_name_last_name_api_v1_user_search_users_post": {
+                "properties": {
+                    "first_name": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "First Name"
+                    },
+                    "second_name": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Second Name"
+                    },
+                    "page": {
+                        "type": "integer",
+                        "title": "Page"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "page"
+                ],
+                "title": "Body_search_users_by_first_name_last_name_api_v1_user_search_users_post"
+            },
             "BriefUserModel": {
                 "properties": {
                     "id": {
@@ -957,6 +1121,89 @@
                     "username"
                 ],
                 "title": "BriefUserModel"
+            },
+            "CreateUserModel": {
+                "properties": {
+                    "username": {
+                        "type": "string",
+                        "title": "Username"
+                    },
+                    "password": {
+                        "type": "string",
+                        "title": "Password"
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "title": "First Name"
+                    },
+                    "second_name": {
+                        "type": "string",
+                        "title": "Second Name"
+                    },
+                    "groups_ids": {
+                        "items": {
+                            "type": "string",
+                            "format": "uuid4"
+                        },
+                        "type": "array",
+                        "title": "Groups Ids"
+                    },
+                    "patronymic": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Patronymic"
+                    },
+                    "birth": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Birth"
+                    },
+                    "email": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "email"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Email"
+                    },
+                    "phone": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Phone"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "username",
+                    "password",
+                    "first_name",
+                    "second_name",
+                    "groups_ids"
+                ],
+                "title": "CreateUserModel"
             },
             "GroupModel": {
                 "properties": {
@@ -1019,20 +1266,8 @@
                 ],
                 "title": "TokenModel"
             },
-            "UserModel": {
+            "UpdateUserModel": {
                 "properties": {
-                    "id": {
-                        "anyOf": [
-                            {
-                                "type": "string",
-                                "format": "uuid4"
-                            },
-                            {
-                                "type": "null"
-                            }
-                        ],
-                        "title": "Id"
-                    },
                     "username": {
                         "anyOf": [
                             {
@@ -1088,6 +1323,89 @@
                         ],
                         "title": "Patronymic"
                     },
+                    "email": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "email"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Email"
+                    },
+                    "phone": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Phone"
+                    },
+                    "birth": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Birth"
+                    },
+                    "groups": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "$ref": "#/components/schemas/GroupModel"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Groups"
+                    }
+                },
+                "type": "object",
+                "title": "UpdateUserModel"
+            },
+            "UserModel": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid4",
+                        "title": "Id"
+                    },
+                    "username": {
+                        "type": "string",
+                        "title": "Username"
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "title": "First Name"
+                    },
+                    "second_name": {
+                        "type": "string",
+                        "title": "Second Name"
+                    },
+                    "patronymic": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Patronymic"
+                    },
                     "birth": {
                         "anyOf": [
                             {
@@ -1124,21 +1442,21 @@
                         "title": "Phone"
                     },
                     "groups": {
-                        "anyOf": [
-                            {
-                                "items": {
-                                    "$ref": "#/components/schemas/GroupModel"
-                                },
-                                "type": "array"
-                            },
-                            {
-                                "type": "null"
-                            }
-                        ],
+                        "items": {
+                            "$ref": "#/components/schemas/GroupModel"
+                        },
+                        "type": "array",
                         "title": "Groups"
                     }
                 },
                 "type": "object",
+                "required": [
+                    "id",
+                    "username",
+                    "first_name",
+                    "second_name",
+                    "groups"
+                ],
                 "title": "UserModel"
             },
             "ValidationError": {
