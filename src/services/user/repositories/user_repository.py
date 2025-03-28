@@ -1,8 +1,13 @@
 import os
 import asyncpg
 
-from models.user_model import UserModel
-from models.group_model import GroupModel
+from models.user_models import (
+    BriefUserModel,
+    CreateUserModel,
+    UpdateUserModel,
+    UserModel,
+)
+from models.group_models import GroupModel
 
 
 DATABASE_URL = (
@@ -36,48 +41,71 @@ class UserRepository:
         await self._db_pool.close()
         self._db_pool = None
 
-    async def get_all_users(self, page: int):
+    async def _get_user_groups_by_user_id(self, conn: asyncpg.Connection, user_id: str):
+        return await conn.fetch(
+            'SELECT "group".id, "group".name from "group" join account_group on account_group.group_id = "group".id join account on account_group.account_id = account.id WHERE account.id = $1',
+            user_id,
+        )
+    
+    async def _get_user_groups_by_username(self, conn: asyncpg.Connection, username: str):
+        return await conn.fetch(
+            'SELECT "group".id, "group".name from "group" join account_group on account_group.group_id = "group".id join account on account_group.account_id = account.id WHERE account.username = $1',
+            username,
+        )
+
+    async def search_users(self, page: int, first_name: str, second_name: str):
         async with self._db_pool.acquire() as conn:
             conn: asyncpg.Connection
             async with conn.transaction():
+
+                first_name = f"%{first_name}%"
+
+                second_name = f"%{second_name}%"
+
                 rows = await conn.fetch(
-                    "SELECT account.id, account.username, account.first_name, account.second_name from account WHERE is_active = TRUE LIMIT $1 OFFSET $2",
+                    "SELECT account.id, account.username, account.first_name, account.second_name from account WHERE is_active = TRUE and (account.first_name LIKE $3 and account.second_name LIKE $4) LIMIT $1 OFFSET $2",
                     self._db_page_size,
                     page * self._db_page_size,
+                    first_name,
+                    second_name,
                 )
 
-                return [UserModel.from_record(row) for row in rows]
+                return [BriefUserModel.from_record(row) for row in rows]
 
     async def get_user_by_id(self, user_id: str):
         async with self._db_pool.acquire() as conn:
             conn: asyncpg.Connection
             async with conn.transaction():
-                return UserModel.from_record(
-                    await conn.fetchrow(
-                        "SELECT account.id, account.username, account.first_name, account.second_name, account.patronymic, account.email, account.phone FROM account WHERE id = $1 and is_active = TRUE",
-                        user_id,
-                    )
-                )
-
-    async def get_user_groups(self, user_id: str):
-        async with self._db_pool.acquire() as conn:
-            conn: asyncpg.Connection
-            async with conn.transaction():
-                rows = await conn.fetch(
-                    'SELECT "group".id, "group".name from "group" join account_group on account_group.group_id = "group".id join account on account_group.account_id = account.id WHERE account.id = $1',
+                user_record = await conn.fetchrow(
+                    "SELECT account.id, account.username, account.first_name, account.second_name, account.patronymic, account.email, account.phone FROM account WHERE id = $1 and is_active = TRUE",
                     user_id,
                 )
-
-                return [GroupModel.from_record(row) for row in rows]
+                groups_records = await self._get_user_groups_by_user_id(conn, user_id)
+                return UserModel.from_record(
+                    {
+                        **user_record,
+                        "groups": [
+                            dict(group_record) for group_record in groups_records
+                        ],
+                    }
+                )
 
     async def get_user_by_username(self, username: str):
         async with self._db_pool.acquire() as conn:
             conn: asyncpg.Connection
             async with conn.transaction():
+                user_record = await conn.fetchrow(
+                    "SELECT account.id, account.username, account.first_name, account.second_name, account.patronymic, account.email, account.phone FROM account WHERE username = $1 and is_active = TRUE",
+                    username,
+                )
+                groups_records = await self._get_user_groups_by_username(conn, username)
                 return UserModel.from_record(
-                    await conn.fetchrow(
-                        "SELECT account.id FROM account WHERE username = $1", username
-                    )
+                    {
+                        **user_record,
+                        "groups": [
+                            dict(group_record) for group_record in groups_records
+                        ],
+                    }
                 )
 
     async def deactivate_user(self, user_id: str):
@@ -100,61 +128,79 @@ class UserRepository:
                 )
                 return bool(affected_columns.split(" ")[:-1])
 
-    async def update_user(self, user: UserModel):
+    async def update_user(self, user_id: str, user: UpdateUserModel | None):
         async with self._db_pool.acquire() as conn:
             conn: asyncpg.Connection
             async with conn.transaction():
+                if user is not None:  # If we have fields for update
+                    usr_dmp = user.model_dump(exclude_none=True)
 
-                usr_dmp = user.model_dump(exclude_none=True)
-                usr_dmp.pop("id")
+                    groups = usr_dmp.pop("groups", None)
 
-                groups = usr_dmp.pop("groups", None)
-
-                update_str = ",".join(
-                    [f"{key} = ${ind + 2}" for ind, key in enumerate(usr_dmp.keys())]
-                )
-
-                if len(update_str):
-                    updated_user = await conn.fetchrow(
-                        f"UPDATE company.public.account SET {update_str} WHERE id = $1 and is_active = TRUE RETURNING id, username,first_name, second_name, patronymic, email, phone",
-                        user.id,
-                        *usr_dmp.values(),
-                    )
-                else:
-                    updated_user = await conn.fetchrow(
-                        "SELECT account.id, account.username, account.first_name, account.second_name, account.patronymic, account.email, account.phone from company.public.account WHERE id = $1 and is_active = TRUE",
-                        user.id,
+                    update_str = ",".join(
+                        [
+                            f"{key} = ${ind + 2}"
+                            for ind, key in enumerate(usr_dmp.keys())
+                        ]
                     )
 
-                if groups is not None:
-                    await conn.execute(
-                        "DELETE FROM account_group WHERE account_id = $1", user.id
-                    )
-                    group_models = []
-                    for group in groups:
-                        updated_account_group = await conn.fetchrow(
-                            f'INSERT INTO account_group (account_id, group_id) VALUES ($1, $2) RETURNING account_group.id, (SELECT "group".name from "group" WHERE "group".id = account_group.id) as name'
+                    if len(update_str):  # Update fields
+                        updated_user = await conn.fetchrow(
+                            f"UPDATE company.public.account SET {update_str} WHERE id = $1 and is_active = TRUE RETURNING id, username,first_name, second_name, patronymic, email, phone",
+                            user_id,
+                            *usr_dmp.values(),
                         )
-                        if updated_account_group is None:
-                            raise ValueError(user)
-                        else:
-                            group_models.append(
-                                GroupModel.from_record(updated_account_group)
+                    else:  # Update only groups
+                        updated_user = await conn.fetchrow(
+                            "SELECT account.id, account.username, account.first_name, account.second_name, account.patronymic, account.email, account.phone from company.public.account WHERE id = $1 and is_active = TRUE",
+                            user_id,
+                        )
+
+                    if groups is not None:  # We need update groups
+                        await conn.execute(
+                            "DELETE FROM account_group WHERE account_id = $1", user_id
+                        )
+                        group_records = []
+                        for group in groups:
+                            updated_account_group = await conn.fetchrow(
+                                f'INSERT INTO account_group (account_id, group_id) VALUES ($1, $2) RETURNING account_group.id, (SELECT "group".name from "group" WHERE "group".id = account_group.id) as name'
                             )
+                            if updated_account_group is None:
+                                raise ValueError(user)
+                            else:
+                                group_records.append(updated_account_group)
 
-                    updated_user_model = UserModel.from_record(updated_user)
-                    updated_user_model.groups = group_models
-                    return updated_user_model
-                else:
-                    return UserModel.from_record(updated_user)
+                        return UserModel.from_record(
+                            {
+                                **updated_user,
+                                "group": [
+                                    dict(group_record)
+                                    for group_record in groups_records
+                                ],
+                            }
+                        )
+                    else:  # We dont need update groups
+                        groups_records = await self._get_user_groups_by_user_id(conn, user_id)
+                        return UserModel.from_record(
+                            {
+                                **updated_user,
+                                "groups": [
+                                    dict(group_record)
+                                    for group_record in groups_records
+                                ],
+                            }
+                        )
 
-    async def create_user(self, user: UserModel):
+                else:  # We dont update fields and can use simple get request
+                    return await self.get_user_by_id(user_id)
+
+    async def create_user(self, user: CreateUserModel):
         async with self._db_pool.acquire() as conn:
             conn: asyncpg.Connection
             async with conn.transaction():
                 usr_dmp = user.model_dump(exclude_none=True)
 
-                groups = usr_dmp.pop("groups")
+                groups_ids = usr_dmp.pop("groups_ids")
 
                 insert_keys = ",".join(usr_dmp.keys())
 
@@ -169,9 +215,11 @@ class UserRepository:
                     )
 
                     group_models = []
-                    for group in groups:
+                    for group_id in groups_ids:
                         created_account_group = await conn.fetchrow(
-                            f'INSERT INTO account_group (account_id, group_id) VALUES ($1, $2) RETURNING account_group.id, (SELECT "group".name from "group" WHERE "group".id = account_group.id) as name'
+                            f'INSERT INTO account_group (account_id, group_id) VALUES ($1, $2) RETURNING account_group.id, (SELECT "group".name from "group" WHERE "group".id = account_group.id) as name',
+                            created_user.id,
+                            group_id,
                         )
                         if created_account_group is None:
                             raise ValueError(user)

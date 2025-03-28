@@ -152,9 +152,12 @@ class AccountService(AccountServiceServicer):
                     payload = jwt.decode(
                         access_token, SECRET_KEY, algorithms=[ALGORITHM]
                     )
+                    
                     permissions: list[str] = payload.get("permissions")
+                    user_id = payload.get("sub")
+                    
                     if request.permission in permissions:
-                        return CheckPermissionsResponse(code=200)
+                        return CheckPermissionsResponse(code=200, user_id=user_id)
                     else:
                         return CheckPermissionsResponse(
                             code=403, message="Access denied"

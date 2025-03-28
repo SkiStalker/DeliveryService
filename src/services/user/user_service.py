@@ -17,19 +17,21 @@ from grpc_build.user_service_pb2 import (
     GetUserDataResponse,
     UpdateUserDataRequest,
     UpdateUserDataResponse,
-    GetAllUsersRequest,
-    GetAllUsersResponse,
     ReactivateUserRequest,
     ReactivateUserResponse,
     DeactivateUserRequest,
     DeactivateUserResponse,
-    UserData,
+    GetUserDataByUsernameRequest,
+    GetUserDataByUsernameResponse,
+    SearchUsersRequest,
+    SearchUsersResponse,
+    BriefUserArray
 )
-from models.user_model import UserModel
+from models.user_models import UpdateUserModel, UserModel, CreateUserModel
 
 from passlib.context import CryptContext
 
-from models.group_model import GroupModel
+from models.group_models import GroupModel
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -45,9 +47,48 @@ class UserService(UserServiceServicer):
         try:
             user = await self._user_rep.get_user_by_id(user_id)
 
-            groups = await self._user_rep.get_user_groups(user_id)
+            if user:
+                return GetUserDataResponse(code=200, user_data=user.to_UserData())
+            else:
+                return GetUserDataResponse(
+                    code=404, message="User not found or deactivated"
+                )
+        except Exception as ex:
+            return GetUserDataResponse(
+                code=500, message=f"Error : {ex}, args : {ex.args}"
+            )
 
-            user.groups = groups
+    async def SearchUsers(
+        self, request: SearchUsersRequest, context: ServicerContext
+    ) -> SearchUsersResponse:
+        page = request.page
+
+        first_name = ""
+        if request.HasField("first_name"):
+            first_name = request.first_name
+
+        second_name = ""
+        if request.HasField("second_name"):
+            second_name = request.second_name
+
+        try:
+            users = await self._user_rep.search_users(page, first_name, second_name)
+
+            return SearchUsersResponse(
+                code=200, users=BriefUserArray(arr=[user.to_BriefUserData() for user in users])
+            )
+
+        except Exception as ex:
+            return SearchUsersResponse(
+                code=500, message=f"Error : {ex}, args : {ex.args}"
+            )
+
+    async def GetUserDataByUsername(
+        self, request: GetUserDataByUsernameRequest, context: ServicerContext
+    ) -> GetUserDataByUsernameResponse:
+        username = request.username
+        try:
+            user = await self._user_rep.get_user_by_username(username)
 
             if user:
                 return GetUserDataResponse(code=200, user_data=user.to_UserData())
@@ -63,34 +104,29 @@ class UserService(UserServiceServicer):
     async def CreateUser(
         self, request: CreateUserRequest, context
     ) -> CreateUserResponse:
-        user_data = request.user_data
+        creating_user_data = request.creating_user_data
 
-        if (
-            not user_data.HasField("id")
-            or not user_data.HasField("password")
-            or not user_data.HasField("groups")
-            or len(user_data.groups.arr) == 0
-        ):
-            return CreateUserResponse(code=400, message="Missing required fields")
+        if len(creating_user_data.groups.arr) == 0:
+            return CreateUserResponse(code=400, message="Missing user group list")
         try:
-            user = self._user_rep.get_user_by_username(user_data.username)
-            if user:
+            exist_user = self._user_rep.get_user_by_username(creating_user_data.username)
+            if exist_user is not None:
                 return CreateUserResponse(
                     code=409, message="User with specified username already exist"
                 )
             else:
 
-                create_user_model = UserModel.from_grpc_message(user_data)
+                creating_user_model = CreateUserModel.from_grpc_message(creating_user_data)
 
-                create_user_model.password = pwd_context.hash(
-                    create_user_model.password
+                creating_user_model.password = pwd_context.hash(
+                    creating_user_model.password
                 )
 
-                created_user = await self._user_rep.create_user(create_user_model)
+                created_user_model = await self._user_rep.create_user(creating_user_model)
 
-                if created_user:
+                if created_user_model is not None:
                     return CreateUserResponse(
-                        code=201, user_data=created_user.to_UserData()
+                        code=201, user_data=created_user_model.to_UserData()
                     )
                 else:
                     return CreateUserResponse(code=400, message="Can not create user")
@@ -102,25 +138,26 @@ class UserService(UserServiceServicer):
     async def UpdateUserData(
         self, request: UpdateUserDataRequest, context: ServicerContext
     ) -> UpdateUserDataResponse:
-        user_data = request.user_data
+        user_id = request.user_id
+        updating_user_data = request.updating_user_data
         try:
-            update_user = UserModel.from_grpc_message(user_data)
-
-            if update_user.username is not None:
-                check_user = await self._user_rep.get_user_by_username(
-                    update_user.username
-                )
-                if check_user is not None:
-                    return UpdateUserDataResponse(
-                        code=409, message="User with specified username already exist"
+            updating_user_model = UpdateUserModel.from_grpc_message(updating_user_data)
+            if updating_user_model is not None:
+                if updating_user_model.username is not None:
+                    check_user = await self._user_rep.get_user_by_username(
+                        updating_user_model.username
                     )
+                    if check_user is not None:
+                        return UpdateUserDataResponse(
+                            code=409, message="User with specified username already exist"
+                        )
 
-            if update_user.password is not None:
-                update_user.password = pwd_context.hash(update_user.password)
+                if updating_user_model.password is not None:
+                    updating_user_model.password = pwd_context.hash(updating_user_model.password)
 
-            updated_user_model = await self._user_rep.update_user(update_user)
+            updated_user_model = await self._user_rep.update_user(user_id, updating_user_model)
 
-            if updated_user_model:
+            if updated_user_model is not None:
                 return UpdateUserDataResponse(
                     code=200, user_data=updated_user_model.to_UserData()
                 )
@@ -130,19 +167,6 @@ class UserService(UserServiceServicer):
                 )
         except Exception as ex:
             return UpdateUserDataResponse(
-                code=500, message=f"Error : {ex}, args : {ex.args}"
-            )
-
-    async def GetAllUsers(
-        self, request: GetAllUsersRequest, context: ServicerContext
-    ) -> GetAllUsersResponse:
-        page = request.page
-        try:
-            users = await self._user_rep.get_all_users(page)
-
-            return GetAllUsersResponse(users=[user.to_UserData() for user in users])
-        except Exception as ex:
-            return GetAllUsersResponse(
                 code=500, message=f"Error : {ex}, args : {ex.args}"
             )
 

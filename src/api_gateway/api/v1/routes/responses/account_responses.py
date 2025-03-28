@@ -8,8 +8,17 @@ from api.v1.routes.responses.responses_parts.server_responses_parts import (
 )
 
 
-token_responses = {**login_failed_response, **internal_error_response}
+token_responses = {
+    **login_failed_response,
+    **internal_error_response,
+}
 
-refresh_responses = {**refresh_failed_response, **internal_error_response}
+refresh_responses = {
+    **refresh_failed_response,
+    **internal_error_response,
+}
 
-logout_responses = {**logout_error_response, **internal_error_response}
+logout_responses = {
+    **logout_error_response,
+    **internal_error_response,
+}

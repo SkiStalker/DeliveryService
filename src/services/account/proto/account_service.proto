@@ -2,6 +2,13 @@ syntax = "proto3";
 
 package account;
 
+service AccountService {
+    rpc Auth (AuthRequest) returns (AuthResponse);
+    rpc CheckPermissions (CheckPermissionsRequest) returns (CheckPermissionsResponse);
+    rpc Refresh (RefreshRequest) returns (RefreshResponse);
+    rpc Logout (LogoutRequest) returns (LogoutResponse);
+}
+
 message LogoutRequest {
     string access_token = 1;
 }
@@ -48,12 +55,8 @@ message CheckPermissionsRequest {
 
 message CheckPermissionsResponse {
     int32 code = 1;
-    optional string message = 2;
-}
-
-service AccountService {
-    rpc Auth (AuthRequest) returns (AuthResponse);
-    rpc CheckPermissions (CheckPermissionsRequest) returns (CheckPermissionsResponse);
-    rpc Refresh (RefreshRequest) returns (RefreshResponse);
-    rpc Logout (LogoutRequest) returns (LogoutResponse);
+    oneof CheckPermissionsResponseOneOf {
+        string message = 2;
+        string user_id = 3;
+    }
 }

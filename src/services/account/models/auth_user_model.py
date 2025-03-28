@@ -10,7 +10,7 @@ class AuthUserModel(BaseModel):
     refresh_token: Optional[str]
 
     @classmethod
-    def from_record(cls, data: Record):
+    def from_record(cls, data):
         try:
             return cls.model_validate(dict(data))
         except ValidationError:

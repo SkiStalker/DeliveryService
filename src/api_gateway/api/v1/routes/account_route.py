@@ -3,7 +3,7 @@ from fastapi import APIRouter, Body, Depends, Form, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from lib.http_tools import make_http_error
-from api.v1.models.token_model import TokenModel
+from api.v1.models.token_models import TokenModel
 from grpc_build.account_service_pb2 import (
     AuthRequest,
     AuthResponse,
@@ -42,13 +42,13 @@ def get_refresh_token(refresh_token: str = Form(...), grant_type: str = Form(...
 
 
 def check_permission(permission: str):
-    async def check_permissions_wrap(access_token=Depends(oauth2_scheme)):
+    async def check_permissions_wrap(access_token=Depends(oauth2_scheme)) -> str:
         account_stub: AccountServiceStub = app.state.account_stub
         resp: CheckPermissionsResponse = await account_stub.CheckPermissions(
             CheckPermissionsRequest(access_token=access_token, permission=permission)
         )
         if resp.code == 200:
-            return
+            return resp.user_id
         else:
             make_http_error(resp)
 
