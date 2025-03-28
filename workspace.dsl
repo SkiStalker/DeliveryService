@@ -30,14 +30,14 @@ workspace {
             // Контейнеры
             notification_service = container "Сервис уведомлений" {
                 description "Интегрируется с системой уведомлений для информирования пользователей"
-                technology "Java Spring Boot"
+                technology "Python GRPC server"
 
                 -> notification_system "Отправляет уведомления" "REST"
             }
 
             payment_registration_service = container "Сервис регистрации платежей" {
                 description "Интегрируется с платежной системой для обработки платежей"
-                technology "Java Spring Boot"
+                technology "Python GRPC server"
 
                 -> payment_system "Обрабатывает платежи" "REST"
             }
@@ -47,16 +47,23 @@ workspace {
                 technology "PostgreSQL"
             }
 
+            account_management_service = container "Сервис управления сессией пользователя" {
+                description "Отвечает за авторизацию, аутентификацию и изменение данных активного пользователя"
+                technology "Python GRPC server"
+
+                -> database "Сохраняет и получает данные активного пользователя" "JDBC"
+            }
+
             user_management_service = container "Сервис управления пользователями" {
                 description "Отвечает за создание и управление данными пользователей"
-                technology "Java Spring Boot"
+                technology "Python GRPC server"
 
                 -> database "Сохраняет и получает данные пользователей" "JDBC"
             }
 
             parcel_management_service = container "Сервис управления посылками" {
                 description "Управляет созданием и отслеживанием посылок"
-                technology "Java Spring Boot"
+                technology "Python GRPC server"
 
                 -> database "Сохраняет и получает данные посылок" "JDBC"
             }
@@ -64,7 +71,7 @@ workspace {
 
             delivery_management_service = container "Сервис управления доставкой" {
                 description "Координирует процесс доставки посылок"
-                technology "Java Spring Boot"
+                technology "Python GRPC server"
 
                 -> database "Сохраняет и получает данные о доставках" "JDBC"
                 -> payment_registration_service "Запрашивает обработку платежей" "gRPC"
@@ -73,45 +80,71 @@ workspace {
 
             api_service = container "API-сервис" {
                 description "Обрабатывает запросы от веб-приложения и внешних систем"
-                technology "Java Spring Boot"
+                technology "FastAPI"
 
-                // Компоненты, представляющие API методы
+
+                token_account_api = component "Получение JWT токенов" {
+                    description "API для получения JWT токенов доступа и обновления по логину и паролю"
+                    technology "REST"
+                    tags "REST, API, POST"
+                }
+
+                refresh_account_api = component "Обновление JWT токена доступа" {
+                    description "API для обновления JWT токена доступа по JWT токену обновлению"
+                    technology "REST"
+                    tags "REST, API, POST"
+                }
+
                 create_user_api = component "Создание нового пользователя" {
                     description "API для создания нового пользователя"
                     technology "REST"
+                    tags "REST, API, POST"
+                }
+                update_user_api = component "Обновление пользователя" {
+                    description "API для обновления данных пользователя"
+                    technology "REST"
+                    tags "REST, API, POST"
                 }
                 find_user_by_login_api = component "Поиск пользователя по логину" {
                     description "API для поиска пользователя по логину"
                     technology "REST"
+                    tags "REST, API, GET"
                 }
                 find_user_by_name_surname_api = component "Поиск пользователя по имени и фамилии" {
                     description "API для поиска пользователя по имени и фамилии"
                     technology "REST"
+                    tags "REST, API, GET"
                 }
                 create_parcel_api = component "Создание посылки" {
                     description "API для создания новой посылки"
                     technology "REST"
+                    tags "REST, API, POST"
                 }
                 get_user_parcels_api = component "Получение посылок пользователя" {
                     description "API для получения списка посылок пользователя"
                     technology "REST"
+                    tags "REST, API, GET"
                 }
                 create_delivery_api = component "Создание доставки" {
                     description "API для создания доставки от пользователя к пользователю"
                     technology "REST"
+                    tags "REST, API, POST"
                 }
                 get_deliveries_by_recipient_api = component "Получение доставок по получателю" {
                     description "API для получения информации о доставках по получателю"
                     technology "REST"
+                    tags "REST, API, GET"
                 }
                 get_deliveries_by_sender_api = component "Получение доставок по отправителю" {
                     description "API для получения информации о доставках по отправителю"
                     technology "REST"
+                    tags "REST, API, GET"
                 }
 
                 -> user_management_service "Управляет данными пользователей" "gRPC"
                 -> parcel_management_service "Управляет данными посылок" "gRPC"
                 -> delivery_management_service "Управляет процессом доставки" "gRPC"
+                -> account_management_service "Управляет авторизацией, аутентификацией и данными активного пользователя" "gRPC"
                 
             }
 
@@ -129,6 +162,32 @@ workspace {
         admin -> delivery_service.web_application "Управляет процессами доставки"
         notification_system -> user_receiver "Получает уведомление о новой доставке" "REST"
 
+
+
+        deploymentEnvironment "PROD" {
+            deploymentNode "DMZ" {
+                deploymentNode "api_gateway" {
+                    containerInstance delivery_service.api_service
+                }
+            }
+
+            deploymentNode "PROTECTED" {
+                deploymentNode "docker-compose" {
+
+                    deploymentNode "user" {
+                        containerInstance delivery_service.user_management_service
+                    }
+                    deploymentNode "db" {
+                        containerInstance delivery_service.database
+                    }
+                    
+                    deploymentNode "account" {
+                        containerInstance delivery_service.account_management_service
+                    }
+                }
+
+            }
+        }
     }
 
     views {
@@ -150,6 +209,14 @@ workspace {
         // Диаграмма динамики для сценария "Создание доставки от пользователя к пользователю"
         dynamic delivery_service {
             title "Создание доставки от пользователя к пользователю"
+            user_sender -> delivery_service.web_application "Пользователь авторизуется"
+            delivery_service.web_application -> delivery_service.api_service "Отправляются данные для авторизации"
+            delivery_service.api_service -> delivery_service.account_management_service "Отправляются данные для авторизации"
+            delivery_service.account_management_service -> delivery_service.database "Производится запрос данных для указанного пользователя"
+            delivery_service.database -> delivery_service.account_management_service "Возвращаются данные для указанного пользователя"
+            delivery_service.account_management_service -> delivery_service.api_service "Отправляются результаты авторизации"
+            delivery_service.api_service -> delivery_service.web_application "Отправляются результаты авторизации"
+            delivery_service.web_application -> user_sender "Пользователю отображаются результаты его авторизации"
             user_sender -> delivery_service.web_application "Инициирует создание доставки"
             delivery_service.web_application -> delivery_service.api_service "Отправляет запрос на создание доставки"
             delivery_service.api_service -> delivery_service.parcel_management_service "Создает запись о новой посылке"
