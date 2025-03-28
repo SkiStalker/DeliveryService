@@ -103,7 +103,12 @@ workspace {
                 update_user_api = component "Обновление пользователя" {
                     description "API для обновления данных пользователя"
                     technology "REST"
-                    tags "REST, API, POST"
+                    tags "REST, API, PUT"
+                }
+                delete_user_api = component "Удаление пользователя" {
+                    description "API для деактивации пользователя"
+                    technology "REST"
+                    tags "REST, API, DELETE"
                 }
                 find_user_by_login_api = component "Поиск пользователя по логину" {
                     description "API для поиска пользователя по логину"
@@ -191,6 +196,20 @@ workspace {
     }
 
     views {
+        styles {
+            element "GET" {
+                background #90ee90
+            }
+            element "POST" {
+                background #FEFFCB
+            }
+            element "PUT" {
+                background #CBF5FF
+            }
+            element "DELETE" {
+                background #FFCBCB
+            }
+        }
         // Диаграмма контекста системы
         systemContext delivery_service {
             include *
