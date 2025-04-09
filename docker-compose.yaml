@@ -14,6 +14,8 @@ services:
           condition: service_healthy
         user:
           condition: service_healthy
+        cargo:
+          condition: service_healthy
 
     ports:
       - "8000:8000"
@@ -22,6 +24,7 @@ services:
       - ".api_env"
       - ".account_env"
       - ".user_env"
+      - ".cargo_env"
     command:
       --port 8000 --host 0.0.0.0
     
@@ -48,7 +51,8 @@ services:
       interval: 15s
       timeout: 1s
       retries: 5
-    
+
+      
   user:
     build: 
       context: ./src/services/user
@@ -73,6 +77,30 @@ services:
       timeout: 1s
       retries: 5
   
+  cargo:
+    build:
+      context: ./src/services/cargo
+      args:
+        - CARGO_SERVICE_PORT
+    container_name: cargo
+    working_dir: /usr/src/app
+    depends_on:
+        db_node_1:
+          condition: service_healthy
+
+    ports:
+      - "50053:50053"
+    env_file:
+      - ".db_env"
+      - ".api_env"
+      - ".cargo_env"
+
+    healthcheck:
+      test: "python ./health_check/health_check.py"
+      interval: 15s
+      timeout: 1s
+      retries: 5
+
   db_node_1:
     build: ./src/postgres
     container_name: postgres_db
