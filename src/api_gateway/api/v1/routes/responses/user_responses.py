@@ -11,13 +11,6 @@ from api.v1.routes.responses.responses_parts.user_responses_parts import (
     user_not_found_response,
 )
 
-
-get_users_responses = {
-    **check_permission_error_response,
-    **check_permission_failed_response,
-    **internal_error_response,
-}
-
 get_user_responses = {
     **check_permission_error_response,
     **check_permission_failed_response,

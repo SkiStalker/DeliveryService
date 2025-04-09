@@ -23,3 +23,6 @@ class GroupModel(BaseModel):
         res = self.model_dump(exclude_none=True)
         res["id"] = str(res["id"])
         return GroupData(**res)
+
+
+

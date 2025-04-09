@@ -155,7 +155,10 @@ class UserRepository:
                             "SELECT account.id, account.username, account.first_name, account.second_name, account.patronymic, account.email, account.phone from company.public.account WHERE id = $1 and is_active = TRUE",
                             user_id,
                         )
-
+                    
+                    if updated_user is None:
+                        return None
+                    
                     if groups is not None:  # We need update groups
                         await conn.execute(
                             "DELETE FROM account_group WHERE account_id = $1", user_id

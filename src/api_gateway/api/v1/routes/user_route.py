@@ -26,7 +26,6 @@ from grpc_build.user_service_pb2 import (
 
 from api.v1.routes.responses.user_responses import (
     get_user_responses,
-    get_users_responses,
     update_user_responses,
     delete_user_responses,
     reactivate_user_responses,

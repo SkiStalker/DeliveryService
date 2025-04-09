@@ -39,12 +39,16 @@ async def lifespan(app: FastAPI):
 
 tags_metadata = [
     {
-        "name": "users",
+        "name": "user",
         "description": "Get and update information about all users",
     },
     {
         "name": "account",
         "description": "Login, get tokens and manage self account information",
+    },
+    {
+        "name": "cargo",
+        "description": "Create, get and update cargo information",
     },
 ]
 

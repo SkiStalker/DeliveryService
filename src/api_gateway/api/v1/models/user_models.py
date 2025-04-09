@@ -92,16 +92,16 @@ class UserModel(BaseModel):
     @classmethod
     def from_grpc_message(cls, grpc_message: UpdateUserData):
         try:
-            update_user_data = {
+            user_data = {
                 desc.name: value for desc, value in grpc_message.ListFields()
             }
 
-            if "groups" in update_user_data:
-                update_user_data["groups"] = [
+            if "groups" in user_data:
+                user_data["groups"] = [
                     GroupModel.from_grpc_message(group)
-                    for group in update_user_data["groups"]
+                    for group in user_data["groups"]
                 ]
 
-            return UserModel(**update_user_data)
+            return UserModel(**user_data)
         except ValidationError:
             return None

@@ -19,6 +19,9 @@ RUN python -m grpc_tools.protoc -Igrpc_build=./proto --python_out=./ --pyi_out=.
 COPY services/user/proto/ ./proto/
 RUN python -m grpc_tools.protoc -Igrpc_build=./proto --python_out=./ --pyi_out=./ --grpc_python_out=./ ./proto/user_service.proto
 
+COPY services/cargo/proto/ ./proto/
+RUN python -m grpc_tools.protoc -Igrpc_build=./proto --python_out=./ --pyi_out=./ --grpc_python_out=./ ./proto/cargo_service.proto
+
 EXPOSE ${API_PORT}
 
 ENTRYPOINT [ "uvicorn" , "main:app"]

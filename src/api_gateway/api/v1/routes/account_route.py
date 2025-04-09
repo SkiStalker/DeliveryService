@@ -1,6 +1,6 @@
-import json
 from fastapi import APIRouter, Body, Depends, Form, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from pydantic import UUID4
 
 from lib.http_tools import make_http_error
 from api.v1.models.token_models import TokenModel
@@ -41,6 +41,7 @@ def get_refresh_token(refresh_token: str = Form(...), grant_type: str = Form(...
     return refresh_token
 
 
+# TODO Remove returning user_id from JWT token
 def check_permission(permission: str):
     async def check_permissions_wrap(access_token=Depends(oauth2_scheme)) -> str:
         account_stub: AccountServiceStub = app.state.account_stub
@@ -48,7 +49,7 @@ def check_permission(permission: str):
             CheckPermissionsRequest(access_token=access_token, permission=permission)
         )
         if resp.code == 200:
-            return resp.user_id
+            return
         else:
             make_http_error(resp)
 
