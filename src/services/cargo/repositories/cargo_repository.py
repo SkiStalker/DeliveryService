@@ -36,6 +36,10 @@ class CargoRepository:
     async def disconnect(self):
         await self._db_pool.close()
         self._db_pool = None
+    
+    def __del__(self):
+        if self._db_pool is not None:
+            self._db_pool.close()
 
     async def create_cargo(self, create_cargo_model: CreateCargoModel) -> CargoModel:
         async with self._db_pool.acquire() as conn:
@@ -155,7 +159,7 @@ class CargoRepository:
                     )
 
                     updated_cargo_record = await conn.fetchrow(
-                        f"UPDATE company.public.account SET {update_str} WHERE id = $1 and is_active = TRUE RETURNING id, username,first_name, second_name, patronymic, email, phone",
+                        f"UPDATE company.public.cargo SET {update_str} WHERE id = $1 RETURNING id, title, \"type\", \"description\", creator_id",
                         cargo_id,
                         *cargo_dmp.values(),
                     )

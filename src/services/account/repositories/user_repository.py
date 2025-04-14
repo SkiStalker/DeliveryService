@@ -28,6 +28,10 @@ class UserRepository:
         await self._db_pool.close()
         self._db_pool = None
 
+    def __del__(self):
+        if self._db_pool is not None:
+            self._db_pool.close()
+
     async def get_user_by_username(self, username: str):
         async with self._db_pool.acquire() as conn:
             conn: asyncpg.Connection
@@ -81,7 +85,3 @@ class UserRepository:
                 )
 
                 return {row["permission_name"] for row in rows}
-
-    def __del__(self):
-        if self._db_pool is not None:
-            self._db_pool.close()

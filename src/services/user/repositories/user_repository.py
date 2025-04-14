@@ -40,6 +40,10 @@ class UserRepository:
     async def disconnect(self):
         await self._db_pool.close()
         self._db_pool = None
+    
+    def __del__(self):
+        if self._db_pool is not None:
+            self._db_pool.close()
 
     async def _get_user_groups_by_user_id(self, conn: asyncpg.Connection, user_id: str):
         return await conn.fetch(
@@ -146,7 +150,7 @@ class UserRepository:
 
                     if len(update_str):  # Update fields
                         updated_user = await conn.fetchrow(
-                            f"UPDATE company.public.account SET {update_str} WHERE id = $1 and is_active = TRUE RETURNING id, username,first_name, second_name, patronymic, email, phone",
+                            f"UPDATE company.public.account SET {update_str} WHERE id = $1 and is_active = TRUE RETURNING id, username, first_name, second_name, patronymic, email, phone",
                             user_id,
                             *usr_dmp.values(),
                         )
@@ -234,7 +238,3 @@ class UserRepository:
                     created_user_model = UserModel.from_record(created_user)
                     created_user_model.groups = group_models
                     return created_user_model
-
-    def __del__(self):
-        if self._db_pool is not None:
-            self._db_pool.close()

@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package delivery;
+
+
+service DeliveryService {
+    rpc CreateDelivery (CreateDeliveryRequest) returns (CreateDeliveryResponse);
+    rpc UpdateDelivery (UpdateDeliveryRequest) returns (UpdateDeliveryResponse);
+    rpc SearchDeliveries (SearchDeliveriesRequest) returns (SearchDeliveriesResponse);
+    rpc GetDelivery (GetDeliveryRequest) returns (GetDeliveryResponse);
+}
+
+message GetDeliveryRequest {
+    string delivery_id = 1;
+}
+
+message GetDeliveryResponse {
+    int32 code = 1;
+    oneof GetDeliveryResponseOneOf {
+        string message = 2;
+        DeliveryData delivery_data = 3;
+    }
+}
+
+message SearchDeliveriesRequest {
+    int32 page = 1;
+    SearchDeliveryData searching_delivery_data = 2;
+}
+
+message SearchDeliveriesResponse {
+    int32 code = 1;
+    oneof DeliveryDataArrayOneOf {
+        string message = 2;
+        DeliveryDataArray deliveries = 3;
+    }
+}
+
+message CreateDeliveryRequest {
+    CreateDeliveryData creating_delivery_data = 1;
+}
+
+message CreateDeliveryResponse {
+    int32 code = 1;
+    oneof CreateDeliveryResponseOneOf {
+        string message = 2;
+        DeliveryData delivery_data = 3;
+    }
+}
+
+
+message UpdateDeliveryRequest {
+    string delivery_id = 1;
+    UpdateDeliveryData updating_delivery_data = 2;
+}
+
+message UpdateDeliveryResponse {
+    int32 code = 1;
+    oneof UpdateDeliveryResponseOneOf {
+        string message = 2;
+        DeliveryData delivery_data = 3;
+    }
+}
+
+message DeliveryDataArray {
+    repeated DeliveryData arr = 1;
+}
+
+message SearchDeliveryData {
+    optional string sender_id = 1;
+    optional string receiver_id = 2;
+}
+
+message UpdateDeliveryData {
+    optional string state = 1;
+    optional int32 priority = 2;
+    optional string receive_address_id = 3;
+}
+
+message DeliveryData {
+    string id = 1;
+    string state = 2;
+    int32 priority = 3;
+    string sender_id = 4;
+    string receiver_id = 5;
+    string cargo_id = 6;
+    string send_address_id = 7;
+    string receive_address_id = 8;
+}
+
+message CreateDeliveryData {
+    int32 priority  = 1;
+    string sender_id = 2;
+    string receiver_id = 3;
+    string cargo_id = 4;
+    string send_address_id = 5;
+    string receive_address_id = 6;
+}

@@ -143,15 +143,6 @@ class UserService(UserServiceServicer):
         try:
             updating_user_model = UpdateUserModel.from_grpc_message(updating_user_data)
             if updating_user_model is not None:
-                if updating_user_model.username is not None:
-                    check_user = await self._user_rep.get_user_by_username(
-                        updating_user_model.username
-                    )
-                    if check_user is not None:
-                        return UpdateUserDataResponse(
-                            code=409, message="User with specified username already exist"
-                        )
-
                 if updating_user_model.password is not None:
                     updating_user_model.password = pwd_context.hash(updating_user_model.password)
 
@@ -163,7 +154,7 @@ class UserService(UserServiceServicer):
                 )
             else:
                 return UpdateUserDataResponse(
-                    code=404, message="User not found or deactivated"
+                    code=400, message="Failed to update user. Not found user or received data is incorrect."
                 )
         except Exception as ex:
             return UpdateUserDataResponse(
