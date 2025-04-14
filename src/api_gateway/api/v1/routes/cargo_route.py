@@ -42,22 +42,6 @@ async def create_cargo(cargo: CreateCargoModel):
     else:
         make_http_error(resp)
 
-
-@router.get(
-    "/{cargo_id}",
-    response_model=CargoModel,
-    dependencies=[check_permission("READ_CARGO")],
-    responses=get_cargo_responses
-)
-async def get_cargo(cargo_id: UUID4):
-    cargo_stub: CargoServiceStub = app.state.cargo_stub
-    resp: GetCargoResponse = cargo_stub.GetCargo(GetCargoRequest(cargo_id=cargo_id))
-    if resp.code == 200:
-        return CargoModel.from_grpc_message(resp.cargo_data)
-    else:
-        make_http_error(resp)
-
-
 @router.get(
     "/user_cargos",
     response_model=list[CargoModel],
@@ -71,6 +55,21 @@ async def get_user_cargos(page: int = Query(...), user_id: UUID4 = Query(...)):
     )
     if resp.code == 200:
         return [CargoModel.from_grpc_message(cargo_data) for cargo_data in resp.arr]
+    else:
+        make_http_error(resp)
+
+
+@router.get(
+    "/{cargo_id}",
+    response_model=CargoModel,
+    dependencies=[check_permission("READ_CARGO")],
+    responses=get_cargo_responses
+)
+async def get_cargo(cargo_id: UUID4):
+    cargo_stub: CargoServiceStub = app.state.cargo_stub
+    resp: GetCargoResponse = cargo_stub.GetCargo(GetCargoRequest(cargo_id=cargo_id))
+    if resp.code == 200:
+        return CargoModel.from_grpc_message(resp.cargo_data)
     else:
         make_http_error(resp)
 
