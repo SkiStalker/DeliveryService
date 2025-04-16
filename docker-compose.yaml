@@ -43,7 +43,6 @@ services:
       - "50051:50051"
     env_file:
       - ".db_env"
-      - ".api_env"
       - ".account_env"
 
     healthcheck:
@@ -68,7 +67,6 @@ services:
       - "50052:50052"
     env_file:
       - ".db_env"
-      - ".api_env"
       - ".user_env"
 
     healthcheck:
@@ -92,8 +90,30 @@ services:
       - "50053:50053"
     env_file:
       - ".db_env"
-      - ".api_env"
       - ".cargo_env"
+
+    healthcheck:
+      test: "python ./health_check/health_check.py"
+      interval: 15s
+      timeout: 1s
+      retries: 5
+  
+  delivery:
+    build:
+      context: ./src/services/delivery
+      args:
+        - DELIVERY_SERVICE_PORT
+    container_name: delivery
+    working_dir: /usr/src/app
+    depends_on:
+        db_node_1:
+          condition: service_healthy
+
+    ports:
+      - "50054:50054"
+    env_file:
+      - ".db_env"
+      - ".delivery_env"
 
     healthcheck:
       test: "python ./health_check/health_check.py"

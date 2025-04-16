@@ -67,7 +67,7 @@ async def get_user_cargos(page: int = Query(...), user_id: UUID4 = Query(...)):
 )
 async def get_cargo(cargo_id: UUID4):
     cargo_stub: CargoServiceStub = app.state.cargo_stub
-    resp: GetCargoResponse = cargo_stub.GetCargo(GetCargoRequest(cargo_id=cargo_id))
+    resp: GetCargoResponse = cargo_stub.GetCargo(GetCargoRequest(cargo_id=str(cargo_id)))
     if resp.code == 200:
         return CargoModel.from_grpc_message(resp.cargo_data)
     else:
@@ -85,7 +85,7 @@ async def update_cargo(cargo_id: UUID4, updating_cargo: UpdateCargoModel):
 
     resp: UpdateCargoResponse = cargo_stub.UpdateCargo(
         UpdateCargoRequest(
-            cargo_id=cargo_id, updating_cargo_data=updating_cargo.to_UpdateCargoData()
+            cargo_id=str(cargo_id), updating_cargo_data=updating_cargo.to_UpdateCargoData()
         )
     )
 
