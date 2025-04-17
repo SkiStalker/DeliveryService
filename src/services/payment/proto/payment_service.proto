@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package payment;
+
+
+service PaymentService {
+    rpc MakePayment (MakePaymentRequest) returns (MakePaymentResponse);
+    rpc AcceptPayment (AcceptPaymentRequest) returns (AcceptPaymentResponse);
+    rpc SearchPayments (SearchPaymentsRequest) returns (SearchPaymentsResponse);
+}
+
+message SearchPaymentsRequest {
+    int32 page = 1;
+    repeated SearchString search_strings = 2;
+}
+
+message SearchPaymentsResponse {
+    int32 code = 1;
+    oneof SearchPaymentsResponseOneOf {
+        string message = 2;
+        StringArray payments = 3;
+    }
+}
+
+message AcceptPaymentRequest {
+    string bank_json_data = 1;
+}
+
+message AcceptPaymentResponse {
+    int32 code = 1;
+    string message = 2;
+}
+
+message MakePaymentRequest {
+    string delivery_id = 1;
+}
+
+message MakePaymentResponse {
+    int32 code = 1;
+    oneof GetPaymentInfoResponseOneOf {
+        string message = 2;
+        PaymentInfoData payment_data = 3;
+    }
+}
+
+message StringArray {
+    repeated string arr = 1;
+}
+
+message SearchString {
+    string field = 1;
+    string value = 2;
+}
+
+message Decimal {
+    optional uint64 units = 1;
+    optional uint32 nanos = 2;
+    optional sint32 sign = 3;
+}
+
+message PaymentInfoData {
+    string delivery_id = 1;
+    Decimal cost = 2;
+    string currency = 3;
+    string company_bank_account_hash = 4;
+}
+
