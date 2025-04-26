@@ -152,10 +152,10 @@ class AccountService(AccountServiceServicer):
                     payload = jwt.decode(
                         access_token, SECRET_KEY, algorithms=[ALGORITHM]
                     )
-                    
+
                     permissions: list[str] = payload.get("permissions")
                     user_id = payload.get("sub")
-                    
+
                     if request.permission in permissions:
                         return CheckPermissionsResponse(code=200, user_id=user_id)
                     else:
@@ -208,26 +208,22 @@ async def serve():
 
     server = grpc.aio.server()
 
-    user_rep = UserRepository()
+    async with UserRepository() as user_rep, TokensClient() as tokens_clt:
 
-    tokens_clt = TokensClient()
-
-    await user_rep.connect()
-    await tokens_clt.connect()
-
-    add_AccountServiceServicer_to_server(AccountService(user_rep, tokens_clt), server)
-    server.add_insecure_port(f"[::]:{os.environ.get("ACCOUNT_SERVICE_PORT", 50051)}")
-    print(
-        f"Async gRPC Server started at port {os.environ.get("ACCOUNT_SERVICE_PORT", 50051)}"
-    )
-    await server.start()
-    try:
-        await server.wait_for_termination()
-    except asyncio.CancelledError:
-        pass
-
-    await user_rep.disconnect()
-    await tokens_clt.disconnect()
+        add_AccountServiceServicer_to_server(
+            AccountService(user_rep, tokens_clt), server
+        )
+        server.add_insecure_port(
+            f"[::]:{os.environ.get("ACCOUNT_SERVICE_PORT", 50051)}"
+        )
+        print(
+            f"Async gRPC Server started at port {os.environ.get("ACCOUNT_SERVICE_PORT", 50051)}"
+        )
+        await server.start()
+        try:
+            await server.wait_for_termination()
+        except asyncio.CancelledError:
+            pass
 
 
 if __name__ == "__main__":

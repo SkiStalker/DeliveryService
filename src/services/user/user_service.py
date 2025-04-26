@@ -198,22 +198,18 @@ async def serve():
 
     server = grpc.aio.server()
 
-    user_rep = UserRepository()
-
-    await user_rep.connect()
-
-    add_UserServiceServicer_to_server(UserService(user_rep), server)
-    server.add_insecure_port(f"[::]:{os.environ.get("USER_SERVICE_PORT", 50052)}")
-    print(
-        f"Async gRPC Server started at port {os.environ.get("USER_SERVICE_PORT", 50052)}"
-    )
-    await server.start()
-    try:
-        await server.wait_for_termination()
-    except asyncio.CancelledError:
-        pass
-
-    await user_rep.disconnect()
+    
+    async with UserRepository() as user_rep:
+        add_UserServiceServicer_to_server(UserService(user_rep), server)
+        server.add_insecure_port(f"[::]:{os.environ.get("USER_SERVICE_PORT", 50052)}")
+        print(
+            f"Async gRPC Server started at port {os.environ.get("USER_SERVICE_PORT", 50052)}"
+        )
+        await server.start()
+        try:
+            await server.wait_for_termination()
+        except asyncio.CancelledError:
+            pass
 
 
 if __name__ == "__main__":

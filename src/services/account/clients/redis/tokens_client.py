@@ -6,6 +6,19 @@ class TokensClient:
     async def connect(self):
         pass
 
+    async def disconnect(self):
+        pass
+
+    def __del__(self):
+        pass
+    
+    async def __aenter__(self):
+        await self.connect()
+        return self
+    
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        await self.disconnect()
+
     async def update_tokens_pair(self, access_token: str, refresh_token: str):
         self._tokes_pairs.update({refresh_token: access_token})
 
@@ -26,8 +39,3 @@ class TokensClient:
         await self._add_access_token_to_blacklist(old_access_token)
         await self._remove_tokens_pair(refresh_token)
 
-    async def disconnect(self):
-        pass
-
-    def __del__(self):
-        pass

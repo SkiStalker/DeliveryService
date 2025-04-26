@@ -31,6 +31,13 @@ class UserRepository:
     def __del__(self):
         if self._db_pool is not None:
             self._db_pool.close()
+    
+    async def __aenter__(self):
+        await self.connect()
+        return self
+    
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        await self.disconnect()
 
     async def get_user_by_username(self, username: str):
         async with self._db_pool.acquire() as conn:

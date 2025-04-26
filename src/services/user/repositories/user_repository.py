@@ -45,6 +45,13 @@ class UserRepository:
         if self._db_pool is not None:
             self._db_pool.close()
 
+    async def __aenter__(self):
+        await self.connect()
+        return self
+    
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        await self.disconnect()
+        
     async def _get_user_groups_by_user_id(self, conn: asyncpg.Connection, user_id: str):
         return await conn.fetch(
             'SELECT "group".id, "group".name from "group" join account_group on account_group.group_id = "group".id join account on account_group.account_id = account.id WHERE account.id = $1',

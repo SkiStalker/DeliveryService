@@ -41,6 +41,13 @@ class CargoRepository:
         if self._db_pool is not None:
             self._db_pool.close()
 
+    async def __aenter__(self):
+        await self.connect()
+        return self
+    
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        await self.disconnect()
+
     async def create_cargo(self, create_cargo_model: CreateCargoModel) -> CargoModel:
         async with self._db_pool.acquire() as conn:
             conn: asyncpg.Connection

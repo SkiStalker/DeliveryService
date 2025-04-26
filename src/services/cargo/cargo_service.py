@@ -130,22 +130,17 @@ async def serve():
 
     server = grpc.aio.server()
 
-    cargo_rep = CargoRepository()
-
-    await cargo_rep.connect()
-
-    add_CargoServiceServicer_to_server(CargoService(cargo_rep), server)
-    server.add_insecure_port(f"[::]:{os.environ.get("CARGO_SERVICE_PORT", 50053)}")
-    print(
-        f"Async gRPC Server started at port {os.environ.get("CARGO_SERVICE_PORT", 50053)}"
-    )
-    await server.start()
-    try:
-        await server.wait_for_termination()
-    except asyncio.CancelledError:
-        pass
-
-    await cargo_rep.disconnect()
+    async with CargoRepository() as cargo_rep:
+        add_CargoServiceServicer_to_server(CargoService(cargo_rep), server)
+        server.add_insecure_port(f"[::]:{os.environ.get("CARGO_SERVICE_PORT", 50053)}")
+        print(
+            f"Async gRPC Server started at port {os.environ.get("CARGO_SERVICE_PORT", 50053)}"
+        )
+        await server.start()
+        try:
+            await server.wait_for_termination()
+        except asyncio.CancelledError:
+            pass
 
 
 if __name__ == "__main__":

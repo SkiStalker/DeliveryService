@@ -20,7 +20,11 @@ from grpc_build.delivery_service_pb2 import (
     UpdateDeliveryRequest,
     UpdateDeliveryResponse,
 )
-from models.delivery_models import CreateDeliveryModel, SearchDeliveryModel, UpdateDeliveryModel
+from models.delivery_models import (
+    CreateDeliveryModel,
+    SearchDeliveryModel,
+    UpdateDeliveryModel,
+)
 
 
 class DeliveryService(DeliveryServiceServicer):
@@ -81,8 +85,10 @@ class DeliveryService(DeliveryServiceServicer):
         try:
             page = request.page
 
-            search_model = SearchDeliveryModel.from_grpc_message(request.searching_delivery_data)
-            
+            search_model = SearchDeliveryModel.from_grpc_message(
+                request.searching_delivery_data
+            )
+
             deliveries = await self._delivery_rep.search_deliveries(page, search_model)
 
             return SearchDeliveriesResponse(
@@ -122,22 +128,19 @@ async def serve():
 
     server = grpc.aio.server()
 
-    delivery_rep = DeliveryRepository()
-
-    await delivery_rep.connect()
-
-    add_DeliveryServiceServicer_to_server(DeliveryService(delivery_rep), server)
-    server.add_insecure_port(f"[::]:{os.environ.get("DELIVERY_SERVICE_PORT", 50054)}")
-    print(
-        f"Async gRPC Server started at port {os.environ.get("DELIVERY_SERVICE_PORT", 50054)}"
-    )
-    await server.start()
-    try:
-        await server.wait_for_termination()
-    except asyncio.CancelledError:
-        pass
-
-    await delivery_rep.disconnect()
+    async with DeliveryRepository() as delivery_rep:
+        add_DeliveryServiceServicer_to_server(DeliveryService(delivery_rep), server)
+        server.add_insecure_port(
+            f"[::]:{os.environ.get("DELIVERY_SERVICE_PORT", 50054)}"
+        )
+        print(
+            f"Async gRPC Server started at port {os.environ.get("DELIVERY_SERVICE_PORT", 50054)}"
+        )
+        await server.start()
+        try:
+            await server.wait_for_termination()
+        except asyncio.CancelledError:
+            pass
 
 
 if __name__ == "__main__":

@@ -44,6 +44,13 @@ class DeliveryRepository:
         if self._db_pool is not None:
             self._db_pool.close()
 
+    async def __aenter__(self):
+        await self.connect()
+        return self
+    
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        await self.disconnect()
+
     async def get_delivery_by_id(self, delivery_id: str):
         async with self._db_pool.acquire() as conn:
             conn: asyncpg.Connection
