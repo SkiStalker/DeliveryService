@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 import os
 from fastapi import FastAPI
 import grpc
+from grpc_build.payment_service_pb2_grpc import PaymentServiceStub
 from grpc_build.delivery_service_pb2_grpc import DeliveryServiceStub
 from grpc_build.cargo_service_pb2_grpc import CargoServiceStub
 from grpc_build.user_service_pb2_grpc import UserServiceStub
@@ -50,13 +51,22 @@ async def disconnect_from_grpc_delivery(app: FastAPI):
     await app.state.delivery_grpc_channel.close()
 
 
+async def connect_to_grpc_payment(app: FastAPI):
+    app.state.payment_grpc_channel = await get_channel("PAYMENT", 50055)
+    app.state.payment_stub = PaymentServiceStub(app.state.payment_grpc_channel)
+
+async def disconnect_from_grpc_payment(app: FastAPI):
+    await app.state.payment_grpc_channel.close()
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await connect_to_grpc_account(app)
     await connect_to_grpc_user(app)
     await connect_to_grpc_cargo(app)
     await connect_to_grpc_delivery(app)
+    await connect_to_grpc_payment(app)
     yield
+    await disconnect_from_grpc_payment(app)
     await disconnect_from_grpc_delivery(app)
     await disconnect_from_grpc_cargo(app)
     await disconnect_from_grpc_user(app)
@@ -80,6 +90,10 @@ tags_metadata = [
         "name": "delivery",
         "description": "Create, get and update delivery information",
     },
+    {
+        "name": "payment",
+        "description": "Get payment info, confirm payment"
+    }
 ]
 
 app = FastAPI(lifespan=lifespan, openapi_tags=tags_metadata)

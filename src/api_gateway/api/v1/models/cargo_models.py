@@ -11,6 +11,7 @@ class CreateCargoModel(BaseModel):
     type: str
     description: str
     creator_id: UUID4
+    weight: int
 
     def to_CreateCargoData(self) -> CreateCargoData:
         res = self.model_dump(exclude_none=True)
@@ -36,6 +37,7 @@ class CargoModel(BaseModel):
     type: str
     description: str
     creator_id: UUID4
+    weight: int
     delivery: Optional[BriefDeliveryModel] = None
 
     @classmethod

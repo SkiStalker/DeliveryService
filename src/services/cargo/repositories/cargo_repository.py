@@ -55,7 +55,7 @@ class CargoRepository:
                 cargo_dmp = create_cargo_model.model_dump(exclude_none=True)
 
                 created_cargo = await conn.fetchrow(
-                    f'INSERT INTO cargo (title, "type", "description", creator_id) VALUES ($1, $2, $3, $4)) RETURNING cargo.id, cargo."type", cargo."description", cargo.creator_id',
+                    f'INSERT INTO cargo (title, "type", "description", creator_id, weight) VALUES ($1, $2, $3, $4, $5)) RETURNING cargo.id, cargo."type", cargo."description", cargo.creator_id, cargo.weight',
                     **cargo_dmp.values(),
                 )
                 return CargoModel.from_record(created_cargo)
@@ -72,6 +72,7 @@ class CargoRepository:
                         c.\"type\",
                         c.\"description\",
                         c.creator_id,
+                        c.weight,
                         d.id AS delivery_id,
                         d.state AS delivery_state
                     FROM company.public.cargo c 
@@ -113,6 +114,7 @@ class CargoRepository:
                         c.\"type\",
                         c.\"description\",
                         c.creator_id,
+                        c.weight,
                         d.id AS delivery_id,
                         d.state AS delivery_state
                     FROM 

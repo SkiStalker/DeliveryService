@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, status
 from pydantic import UUID4
 from api.v1.models.delivery_models import (
     CreateDeliveryModel,
@@ -86,7 +86,8 @@ async def get_delivery(delivery_id: UUID4):
     response_model=DeliveryModel,
     dependencies=[check_permission("CREATE_DELIVERY")],
     response_model_exclude_unset=True,
-    responses=create_delivery_responses
+    responses=create_delivery_responses,
+    status_code=status.HTTP_201_CREATED
 )
 async def create_delivery(creating_delivery: CreateDeliveryModel):
     delivery_stub: DeliveryServiceStub = app.state.delivery_stub

@@ -11,6 +11,7 @@ class CreateCargoModel(BaseModel):
     type: str
     description: str
     creator_id: UUID4
+    weight: int
 
     @classmethod
     def from_grpc_message(cls, grpc_message: CreateCargoData):
@@ -45,6 +46,7 @@ class CargoModel(BaseModel):
     title: str
     type: str
     description: str
+    weight: int
     creator_id: UUID4
     delivery: Optional[BriefDeliveryModel] = None
     

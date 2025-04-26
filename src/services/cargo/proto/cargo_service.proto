@@ -57,6 +57,7 @@ message CreateCargoData {
     string type = 2;
     string description = 3;
     string creator_id = 4;
+    int32 weight = 5;
 }
 
 message BriefDeliveryData {
@@ -91,4 +92,5 @@ message CargoData {
     string description = 4;
     string creator_id = 5;
     optional BriefDeliveryData delivery_data = 6;
+    int32 weight = 7;
 }

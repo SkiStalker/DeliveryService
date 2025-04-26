@@ -1,15 +1,16 @@
 from pydantic import BaseModel, ValidationError
 
-from grpc_build.payment_service_pb2 import DecimalData
+from models.item_models import ItemModel
+from grpc_build.payment_service_pb2 import CostRuleData
 from google.protobuf.json_format import MessageToDict
 
-class DecimalModel(BaseModel):
-    units: int
-    nanos: int
-    sign: int
-    
+
+class CostRuleModel(BaseModel):
+    compare_type: str
+    data: ItemModel
+
     @classmethod
-    def from_grpc_message(cls, grpc_message: DecimalData):
+    def from_grpc_message(cls, grpc_message: CostRuleData):
         try:
             cost_rule_data = MessageToDict(
                 grpc_message,
@@ -18,6 +19,6 @@ class DecimalModel(BaseModel):
                 always_print_fields_with_no_presence=True
             )
             
-            return DecimalModel(**cost_rule_data)
+            return CostRuleModel(**cost_rule_data)
         except ValidationError:
             return None

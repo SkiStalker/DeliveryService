@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, status
 from pydantic import UUID4
 
 from api.v1.models.cargo_models import CargoModel, CreateCargoModel, UpdateCargoModel
@@ -29,7 +29,8 @@ router = APIRouter(prefix="/api/v1/cargo", tags=["cargo"])
     response_model=CargoModel,
     dependencies=[check_permission("CREATE_CARGO")],
     response_model_exclude_unset=True,
-    responses=create_cargo_responses
+    responses=create_cargo_responses,
+    status_code=status.HTTP_201_CREATED
 )
 async def create_cargo(cargo: CreateCargoModel):
     cargo_stub: CargoServiceStub = app.state.cargo_stub

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Depends, Query
+from fastapi import APIRouter, Body, Depends, Query, status
 from fastapi.responses import JSONResponse
 from pydantic import UUID4
 from lib.http_tools import make_http_error
@@ -112,6 +112,7 @@ async def search_users_by_first_name_last_name(
     dependencies=[check_permission("CREATE_USER")],
     response_model_exclude_unset=True,
     responses=create_user_responses,
+    status_code=status.HTTP_201_CREATED
 )
 async def create_user(user: CreateUserModel):
     user_stub: UserServiceStub = app.state.user_stub

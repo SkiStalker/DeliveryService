@@ -16,4 +16,4 @@ RUN python -m grpc_tools.protoc -Igrpc_build=./proto --python_out=./ --pyi_out=.
 
 EXPOSE ${DELIVERY_SERVICE_PORT}
 
-ENTRYPOINT [ "python" , "-u", "delivery_service.py"]
+ENTRYPOINT [ "python" , "-u", "payment_service.py"]
