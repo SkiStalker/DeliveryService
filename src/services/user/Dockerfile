@@ -6,6 +6,7 @@ ADD requirements.txt ./
 RUN pip install -r requirements.txt
 ADD health_check ./health_check
 ADD models/ ./models
+ADD clients/ ./clients
 ADD proto/ ./proto
 ADD repositories/ ./repositories
 

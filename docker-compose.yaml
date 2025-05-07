@@ -67,12 +67,14 @@ services:
     depends_on:
         db_node_1:
           condition: service_healthy
-
+        redis:
+          condition: service_healthy
     ports:
       - "50052:50052"
     env_file:
       - ".db_env"
       - ".user_env"
+      - ".redis_env"
 
     healthcheck:
       test: "python ./health_check/health_check.py"
@@ -148,6 +150,17 @@ services:
       interval: 15s
       timeout: 1s
       retries: 5
+
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   db_node_1:
     build: ./src/postgres

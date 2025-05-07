@@ -25,13 +25,14 @@ from grpc_build.user_service_pb2 import (
     GetUserDataByUsernameResponse,
     SearchUsersRequest,
     SearchUsersResponse,
-    BriefUserArray
+    BriefUserArray,
 )
 from models.user_models import UpdateUserModel, UserModel, CreateUserModel
 
 from passlib.context import CryptContext
 
 from models.group_models import GroupModel
+from clients.redis.user_cache import UserCache
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -75,7 +76,8 @@ class UserService(UserServiceServicer):
             users = await self._user_rep.search_users(page, first_name, second_name)
 
             return SearchUsersResponse(
-                code=200, users=BriefUserArray(arr=[user.to_BriefUserData() for user in users])
+                code=200,
+                users=BriefUserArray(arr=[user.to_BriefUserData() for user in users]),
             )
 
         except Exception as ex:
@@ -109,20 +111,26 @@ class UserService(UserServiceServicer):
         if len(creating_user_data.groups.arr) == 0:
             return CreateUserResponse(code=400, message="Missing user group list")
         try:
-            exist_user = self._user_rep.get_user_by_username(creating_user_data.username)
+            exist_user = self._user_rep.get_user_by_username(
+                creating_user_data.username
+            )
             if exist_user is not None:
                 return CreateUserResponse(
                     code=409, message="User with specified username already exist"
                 )
             else:
 
-                creating_user_model = CreateUserModel.from_grpc_message(creating_user_data)
+                creating_user_model = CreateUserModel.from_grpc_message(
+                    creating_user_data
+                )
 
                 creating_user_model.password = pwd_context.hash(
                     creating_user_model.password
                 )
 
-                created_user_model = await self._user_rep.create_user(creating_user_model)
+                created_user_model = await self._user_rep.create_user(
+                    creating_user_model
+                )
 
                 if created_user_model is not None:
                     return CreateUserResponse(
@@ -144,9 +152,13 @@ class UserService(UserServiceServicer):
             updating_user_model = UpdateUserModel.from_grpc_message(updating_user_data)
             if updating_user_model is not None:
                 if updating_user_model.password is not None:
-                    updating_user_model.password = pwd_context.hash(updating_user_model.password)
+                    updating_user_model.password = pwd_context.hash(
+                        updating_user_model.password
+                    )
 
-            updated_user_model = await self._user_rep.update_user(user_id, updating_user_model)
+            updated_user_model = await self._user_rep.update_user(
+                user_id, updating_user_model
+            )
 
             if updated_user_model is not None:
                 return UpdateUserDataResponse(
@@ -154,7 +166,8 @@ class UserService(UserServiceServicer):
                 )
             else:
                 return UpdateUserDataResponse(
-                    code=400, message="Failed to update user. Not found user or received data is incorrect."
+                    code=400,
+                    message="Failed to update user. Not found user or received data is incorrect.",
                 )
         except Exception as ex:
             return UpdateUserDataResponse(
@@ -198,8 +211,9 @@ async def serve():
 
     server = grpc.aio.server()
 
-    
-    async with UserRepository() as user_rep:
+    async with UserCache() as user_cache, UserRepository(
+        cache_class=user_cache
+    ) as user_rep:
         add_UserServiceServicer_to_server(UserService(user_rep), server)
         server.add_insecure_port(f"[::]:{os.environ.get("USER_SERVICE_PORT", 50052)}")
         print(

@@ -8,6 +8,7 @@ from models.user_models import (
     UserModel,
 )
 from models.group_models import GroupModel
+from clients.redis.user_cache import UserCache
 
 
 DATABASE_URL = (
@@ -28,11 +29,15 @@ DB_PAGE_SIZE = int(os.environ.get("DB_PAGE_SIZE", "1000"))
 
 class UserRepository:
     def __init__(
-        self, connection_string: str = DATABASE_URL, db_page_size: int = DB_PAGE_SIZE
+        self,
+        connection_string: str = DATABASE_URL,
+        db_page_size: int = DB_PAGE_SIZE,
+        cache_class: UserCache | None = None,
     ):
         self._connection_string = connection_string
         self._db_pool: asyncpg.Pool | None = None
         self._db_page_size = db_page_size
+        self._cache = cache_class
 
     async def connect(self):
         self._db_pool = await asyncpg.create_pool(self._connection_string)
@@ -40,7 +45,7 @@ class UserRepository:
     async def disconnect(self):
         await self._db_pool.close()
         self._db_pool = None
-    
+
     def __del__(self):
         if self._db_pool is not None:
             self._db_pool.close()
@@ -48,17 +53,19 @@ class UserRepository:
     async def __aenter__(self):
         await self.connect()
         return self
-    
+
     async def __aexit__(self, exc_type, exc_value, traceback):
         await self.disconnect()
-        
+
     async def _get_user_groups_by_user_id(self, conn: asyncpg.Connection, user_id: str):
         return await conn.fetch(
             'SELECT "group".id, "group".name from "group" join account_group on account_group.group_id = "group".id join account on account_group.account_id = account.id WHERE account.id = $1',
             user_id,
         )
-    
-    async def _get_user_groups_by_username(self, conn: asyncpg.Connection, username: str):
+
+    async def _get_user_groups_by_username(
+        self, conn: asyncpg.Connection, username: str
+    ):
         return await conn.fetch(
             'SELECT "group".id, "group".name from "group" join account_group on account_group.group_id = "group".id join account on account_group.account_id = account.id WHERE account.username = $1',
             username,
@@ -84,6 +91,11 @@ class UserRepository:
                 return [BriefUserModel.from_record(row) for row in rows]
 
     async def get_user_by_id(self, user_id: str):
+        if self._cache is not None:
+            cache_res = await self._cache.get_user_by_id(user_id)
+            if cache_res is not None:
+                return cache_res
+
         async with self._db_pool.acquire() as conn:
             conn: asyncpg.Connection
             async with conn.transaction():
@@ -127,7 +139,11 @@ class UserRepository:
                     "UPDATE company.public.account SET is_active = FALSE WHERE id = $1 and is_active = TRUE",
                     user_id,
                 )
-                return bool(affected_columns.split(" ")[:-1])
+                if bool(affected_columns.split(" ")[:-1]) is True:
+                    if self._cache is not None:
+                        await self._cache.del_user(user_id)
+                        return True
+                return False
 
     async def reactivate_user(self, user_id: str):
         async with self._db_pool.acquire() as conn:
@@ -137,7 +153,13 @@ class UserRepository:
                     "UPDATE company.public.account SET is_active = TRUE WHERE id = $1 and is_active = FALSE",
                     user_id,
                 )
-                return bool(affected_columns.split(" ")[:-1])
+                if bool(affected_columns.split(" ")[:-1]) is not None:
+                    if self._cache is not None:
+                        await self._cache.add_user(
+                            await self.get_user_by_id(user_id)
+                        )
+                        return True
+                return False
 
     async def update_user(self, user_id: str, user: UpdateUserModel | None):
         async with self._db_pool.acquire() as conn:
@@ -166,10 +188,10 @@ class UserRepository:
                             "SELECT account.id, account.username, account.first_name, account.second_name, account.patronymic, account.email, account.phone from company.public.account WHERE id = $1 and is_active = TRUE",
                             user_id,
                         )
-                    
+
                     if updated_user is None:
                         return None
-                    
+
                     if groups is not None:  # We need update groups
                         await conn.execute(
                             "DELETE FROM account_group WHERE account_id = $1", user_id
@@ -184,7 +206,7 @@ class UserRepository:
                             else:
                                 group_records.append(updated_account_group)
 
-                        return UserModel.from_record(
+                        updated_user_model = UserModel.from_record(
                             {
                                 **updated_user,
                                 "group": [
@@ -193,9 +215,17 @@ class UserRepository:
                                 ],
                             }
                         )
+                        if self._cache is not None:
+                            await self._cache.add_or_update_user(
+                                updated_user_model
+                            )
+                        return updated_user_model
+
                     else:  # We dont need update groups
-                        groups_records = await self._get_user_groups_by_user_id(conn, user_id)
-                        return UserModel.from_record(
+                        groups_records = await self._get_user_groups_by_user_id(
+                            conn, user_id
+                        )
+                        updated_user_model = UserModel.from_record(
                             {
                                 **updated_user,
                                 "groups": [
@@ -204,9 +234,16 @@ class UserRepository:
                                 ],
                             }
                         )
+                        if self._cache is not None:
+                            self._cache.add_or_update_user(updated_user_model)
+                        return updated_user_model
 
                 else:  # We dont update fields and can use simple get request
-                    return await self.get_user_by_id(user_id)
+
+                    user_model = await self.get_user_by_id(user_id)
+                    if self._cache is not None:
+                        self._cache.add_or_update_user(user_model)
+                    return user_model
 
     async def create_user(self, user: CreateUserModel):
         async with self._db_pool.acquire() as conn:
@@ -244,4 +281,6 @@ class UserRepository:
 
                     created_user_model = UserModel.from_record(created_user)
                     created_user_model.groups = group_models
+                    if self._cache is not None:
+                        self._cache.add_or_update_user(created_user_model)
                     return created_user_model

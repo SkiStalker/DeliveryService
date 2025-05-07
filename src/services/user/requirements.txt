@@ -5,3 +5,4 @@ pydantic
 passlib
 bcrypt
 email-validator
+redis
