@@ -1,59 +1,57 @@
-# Задание 01
+# Delivery service with microservices
+## Table of contents
 
-Целью работы является получение навыка в описании архитектуры в стиле Architecture As A Code и
-проектировании системы «сверху вниз».
+1. [Summary](#summary)
+2. [Technology Stack](#technology-stack)
+3. [Structure](#structure)
+4. [Usage](#usage)
 
+## Summary
+This project is designed to ensure the operation of the goods delivery service. 
+A microservice architecture was chosen using gRPC as a communication between microservices and an api gateway.
+Security is achieved through the use of JWT tokens.
 
-Необходимо создать описание архитектуры системы в формате Structurizr DSL:
-1. Изучите текст задания.
-2. Определите перечень ролей пользователей и перечень внешних систем.
-3. Создайте описание softwareSystem и диаграмму systemContext
-4. Продумайте основные задачи пользователей и как они могут быть реализованы
-5. Сформируйте перечень container отвечающих за обработку событий, связанных с объектами
-предметной области, определенной в задании (Клиентский сервис, Сервис управления
-доставкой, Сервис регистрации платежей …)
-6. Определите взаимодействие между контейнерами (создание пользователя, создание заказа на
-доставку …)
-7. Опишите модель container в Structurizr DSL и создайте диаграмму Container.
-8. Определите технологии и проставьте их на контейнерах и связях
-9. Создайте одну диаграмму dynamic для архитектурно значимого варианта использования
-(отправка сообщения между пользователями, покупка товара в магазине ….)
+## Technology Stack
+1. Python v3.13
+2. gRPC v1.74.2
+3. PostgreSQL v17.5
 
-Результат должен быть оформлен в виде следующих файлов, размещенных в вашем github:
-- readme.md с текстом задания
-- workspace.dsl с моделью и view
+## Structure
+- __env_examples__ - examples of all required env files
+- __src__ - sources folder
+    - __api_gateway__ - web service api gateway with versions
+    - __mongo__ - MongoDB init script
+    - __postgres__ - PostgreSQL init scripts and Dockerfile
+    - __services__ - microservices
+- __docker-compose.yaml__ - docker compose start file
+- __openapi.json__ - OpenAPI specification for all available api methods
 
-<br>
-Вариант № 6 <br>
-Сервис доставки https://www.cdek.ru/ru/ <br>
+## Usage
+1. Install git
+```bash
+sudo apt-get update
+sudo apt-get install git
+```
 
-Приложение должно содержать следующие данные:
-- Пользователь
-- Посылка
-- Доставка
+2. Clone repository
+```bash
+git clone https://github.com/SkiStalker/DeliveryService
+```
 
-Реализовать API:
-- Создание нового пользователя
-- Поиск пользователя по логину
-- Поиск пользователя по маске имя и фамилии
-- Создание посылки
-- Получение посылок пользователя
-- Создание доставки от пользователя к пользователю
-- Получение информации о доставке по получателю
-- Получение информации о доставке по отправителю
+3. Move to project directory
+```bash
+cd ./DeliveryServiceGo
+```
 
+4. Copy __ALL__ env files from [env_examples](./env_examples) folder to project root and specify your own values in them
+```bash
+cp ./env_examples/* ./
+```
 
-# Задание 02
-1. Создайте HTTP REST API для сервисов, спроектированных в первом задании (по
-проектированию). Должно быть реализовано как минимум два сервиса
-(управления пользователем, и хотя бы один «бизнес» сервис)
-2. Сервис должен поддерживать аутентификацию с использованием JWT-token
-(Bearer)
-3. Должен быть отдельный endpoint для получения токена по логину/паролю
-4. Сервис должен реализовывать как минимум GET/POST методы
-5. Данные сервиса должны храниться в памяти (базу данных добавим потом)
-6. В целях проверки должен быть заведён мастер-пользователь (имя admin,
-пароль secret)
-7. Сделайте OpenAPI спецификацию и сохраните ее в корне проекта
-8. Актуализируйте модель архитектуры в Structurizr DSL
-9. Ваши сервисы должны запускаться через docker-compose коммандой dockercompose up (создайте Docker файлы для каждого сервиса)
+5. Install docker <br>
+See [how to install docker](https://docs.docker.com/desktop/setup/install/linux/)
+
+6. Start docker compose
+```bash
+docker compose up
+```
